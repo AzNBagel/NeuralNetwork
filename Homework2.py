@@ -24,6 +24,9 @@ class HiddenPerceptron:
         self.bias = random.uniform(-1, 1)
 
 
+    def test(self, test_set):
+
+    def learn(self):
 
 class OutputPerceptron:
     """Individual OutputPerceptron object.
@@ -79,7 +82,7 @@ class OutputPerceptron:
             many were correct.
         """
 
-        correct = 0.0
+
         num_trains = 0.0
         test_set = np.vstack((data_array[self.letter_1], data_array[self.letter_2]))
         np.random.shuffle(test_set)
