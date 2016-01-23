@@ -28,6 +28,7 @@ class HiddenPerceptron:
 
     def learn(self):
 
+
 class OutputPerceptron:
     """Individual OutputPerceptron object.
 
@@ -60,7 +61,7 @@ class OutputPerceptron:
             will be returned if the sgn() function returns -1.
         """
 
-        result = self.sgn(np.dot(self.weights, test_set) + self.bias)
+        result = sgn(np.dot(self.weights, test_set) + self.bias)
         if result == 1:
             return self.letter_1
         else:
@@ -82,7 +83,7 @@ class OutputPerceptron:
             many were correct.
         """
 
-
+        correct = 0.0
         num_trains = 0.0
         test_set = np.vstack((data_array[self.letter_1], data_array[self.letter_2]))
         np.random.shuffle(test_set)
@@ -283,6 +284,15 @@ def sgn(result):
         return -1
     else:
         return 1
+
+def sigmoid(result):
+    """Sigmoid function."""
+    return 1.0/(1.0 +np.exp(-result))
+
+def sigmoid_prime(result):
+    """Take derivative of the sigmoid function."""
+    # Pretty amazing math trick here from notes.
+    return sigmoid(result)*(1-sigmoid(result))
 
 
 network = PerceptronManager()
