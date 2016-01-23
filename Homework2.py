@@ -9,30 +9,39 @@ Homework #2
 Neural Network Assignment
 """
 
-ETA_VALUE = .2
+LEARNING_RATE = .2
 ACCURACY_CHANGE = .0005
+MOMENTUM = .03
+
+NUM_HIDDEN_UNITS = 4
+
+class HiddenPerceptron:
+
+    def __init__(self):
+        self.weights = []
+        for i in range(16):
+            self.weights.append(random.uniform(-1, 1))
+        self.bias = random.uniform(-1, 1)
 
 
-class Perceptron:
-    """Individual Perceptron object.
+
+class OutputPerceptron:
+    """Individual OutputPerceptron object.
 
     I made each perceptron an object to allow for more object oriented behavior
-    within my code. My unfamiliarity with Python made this sort of a mish mash
+    within my code. My unfamiliarity with Python made this sort of a mish-mash
     of brute force methods and numpy ease.
 
     Attributes:
         letter_1: A float value representing the "1" output of this perceptron
-        letter_2: Represents "-1" result for this perceptron.
         weights: array of 16 weights randomized on initialization.
-        bias: not affected by the input, so separated for ease of dot product
+        bias: weight representing the bias
     """
 
-    def __init__(self, first, second):
+    def __init__(self, hidden_layer_output):
         """Inits Perceptron class with its letter values [0.0,25.0]."""
         self.letter_1 = first
-        self.letter_2 = second
         self.weights = []
-        self.bias = 0
         for i in range(16):
             self.weights.append(random.uniform(-1, 1))
         self.bias = random.uniform(-1, 1)
@@ -85,7 +94,7 @@ class Perceptron:
                 target_value = -1
 
             # Result is useless by itself here so dump into SGN
-            result = self.sgn(np.dot(self.weights, test_set[i, 1:]) + self.bias)
+            result = sgn(np.dot(self.weights, test_set[i, 1:]) + self.bias)
 
             # Figure out accuracy
             if result == target_value:
@@ -99,17 +108,13 @@ class Perceptron:
         # Pass through the number of iterations plus the num correct
         return accuracy
 
-    def sgn(self, result):
-        if result < 0:
-            return -1
-        else:
-            return 1
+
 
     def learn(self, params, target_value):
         for i in range(16):
-            self.weights[i] += (ETA_VALUE * params[i] * target_value)
+            self.weights[i] += (LEARNING_RATE * params[i] * target_value)
         # Apply same method to bias
-        self.bias += (ETA_VALUE * target_value)
+        self.bias += (LEARNING_RATE * target_value)
 
     def randomize(self):
         for i in range(16):
@@ -125,7 +130,7 @@ class PerceptronManager:
     or trigger testing. Also includes a terribly implemented menu.
 
     Attributes:
-        perceptron_list: array of perceptrons totalling 325 ((n(n-1))/2).
+        output_perceptron_list: array of perceptrons totalling 325 ((n(n-1))/2).
             This is the main object that iterates through for testing and training
         accuracy_previous_epoch: Training, tracks previous accuracy.
         accuracy_current_epoch: Training, tracks current epoch.
@@ -136,15 +141,15 @@ class PerceptronManager:
     """
 
     def __init__(self):
-        """Instantiates perceptron_list and other values."""
+        """Instantiates output_perceptron_list and other values."""
 
-        self.perceptron_list = []
+        self.output_perceptron_list = []
 
         # Loop creates distinct pairings of letter representations.
         for i in range(25):
             for j in range(i+1, 26):
                 if i != j:
-                    self.perceptron_list.append(Perceptron(i, j))
+                    self.output_perceptron_list.append(OutputPerceptron(i, j))
 
         # Training variables
         self.accuracy_previous_epoch = 0.0
@@ -159,7 +164,7 @@ class PerceptronManager:
     def randomize_weights(self):
         """Simple little method to re-randomize weights."""
         for i in range(325):
-            self.perceptron_list[i].randomize()
+            self.output_perceptron_list[i].randomize()
 
     # Loop to control duration of epochs
     def epoch_loop(self):
@@ -194,7 +199,7 @@ class PerceptronManager:
         # Previous iteration defined an epoch as a single round of
         # Testing for all 325 perceptrons.
         # New epoch is defined at the perceptron level, not system.
-        for perceptron in self.perceptron_list:
+        for perceptron in self.output_perceptron_list:
             perceptron_delta = 1
             current_accuracy = 0
             while perceptron_delta > ACCURACY_CHANGE:
@@ -231,7 +236,7 @@ class PerceptronManager:
                 vote_tracking.append(0.0)
             actual_letter = file_data[i, 0]
 
-            for perceptron in self.perceptron_list:
+            for perceptron in self.output_perceptron_list:
                 predicted_letter = perceptron.test(file_data[i, 1:])  # Pass one row at a time, minus actual letter
                 vote_tracking[predicted_letter] = ((vote_tracking[predicted_letter]) + 1)
 
@@ -269,6 +274,13 @@ class PerceptronManager:
             if answer == 3:
                 self.test()
                 print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
+
+def sgn(result):
+    if result < 0:
+        return -1
+    else:
+        return 1
+
 
 network = PerceptronManager()
 network.menu()
