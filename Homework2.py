@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from sklearn import preprocessing
 
 
 """
@@ -36,7 +37,12 @@ class HiddenPerceptron:
     def learn(self):
 
 
-    def forward_prop(self, traingint_set):
+    def forward_prop(self, training_set):
+
+        # Input layer * Weights + bias
+
+
+        # Pass this output to PerceptronManager to assemble into array
 
 
 
@@ -79,6 +85,24 @@ class OutputPerceptron:
             return self.letter_2
 
     def train(self, data_array):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # # # # # # DEPRECATED
+
         """Runs training data against weights and calls learning if necessary.
 
         The main function of this project. The data_array will have all the
@@ -139,22 +163,6 @@ class OutputPerceptron:
     def back_prop(self, results):
 
 class PerceptronManager:
-    """Management class to pass and control data flow to perceptrons.
-
-    Mostly a controller class for simplified conversion in later assignments.
-    This class controls the start of training routines, can randomize weights,
-    or trigger testing. Also includes a terribly implemented menu.
-
-    Attributes:
-        output_perceptron_list: array of perceptrons totalling 325 ((n(n-1))/2).
-            This is the main object that iterates through for testing and training
-        accuracy_previous_epoch: Training, tracks previous accuracy.
-        accuracy_current_epoch: Training, tracks current epoch.
-        delta_accuracy: Stopping condition, tracks different between current and prev.
-        overall_accuracy: Testing, saves overall accuracy of testing set.
-        final_correct: Testing, tally of correct predictions.
-        final_iterations: Testing, tally of total iterations.
-    """
 
     def __init__(self):
         """Instantiates output_perceptron_list and other values."""
@@ -162,6 +170,9 @@ class PerceptronManager:
         self.hidden_perceptron_list = []
         self.hidden_layer_output = []
         self.output_layer_output = []
+
+        # Saving the STD and Mean from training data to use against the test data
+        self.scaler = []
 
         for i in range(26):
             self.output_perceptron_list.append(OutputPerceptron(i))
@@ -212,10 +223,17 @@ class PerceptronManager:
         # Run Perceptron Training Algorithm
         file_data = np.genfromtxt('training.txt', delimiter=',', dtype='O')
 
+
+
+        # Convert to numerical value letter instead of Char
         for i in range(len(file_data)):
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
         file_data = file_data.astype(np.float32)     # Convert to floats
-        file_data[:, 1:] = file_data[:, 1:] / 15.0     # Get smaller values for the parameters
+
+        self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
+        file_data[:,1:] = self.scaler
+
+        # file_data[:, 1:] = file_data[:, 1:] / 15.0     # Get smaller values for the parameters
 
         # Sort data into
         files_out = []
