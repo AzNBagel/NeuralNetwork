@@ -22,9 +22,11 @@ class HiddenPerceptron:
 
     def __init__(self):
         self.weights = []
+
         for i in range(16):
-            self.weights.append(random.uniform(-1, 1))
-        self.bias = random.uniform(-1, 1)
+            self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
+
+        self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
 
 
 
@@ -32,6 +34,10 @@ class HiddenPerceptron:
     def test(self, test_set):
 
     def learn(self):
+
+
+    def forward_prop(self, traingint_set):
+
 
 
 class OutputPerceptron:
@@ -130,6 +136,7 @@ class OutputPerceptron:
             self.weights[i] = random.uniform(-1, 1)
         self.bias = random.uniform(-1, 1)
 
+    def back_prop(self, results):
 
 class PerceptronManager:
     """Management class to pass and control data flow to perceptrons.
