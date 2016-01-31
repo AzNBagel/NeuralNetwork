@@ -31,11 +31,15 @@ class HiddenPerceptron:
 
 
 
-    def test(self, test_set):
+    # def test(self, test_set):
 
     def forward_prop(self, training_set):
+        result = sum(self.weights * training_set[1:]) + self.bias
 
-        # Input layer * Weights + bias
+        result = sigmoid(result)
+
+        return result
+
 
         # Pass this output to PerceptronManager to assemble into array
     def back_prop(self, hidden_error, feature, feature_index):
