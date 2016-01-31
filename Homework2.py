@@ -12,8 +12,11 @@ Neural Network Assignment
 LEARNING_RATE = .2
 ACCURACY_CHANGE = .0005
 MOMENTUM = .03
-
+WEIGHT_UPPER_BOUND = .25
+WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
+
+
 
 class HiddenPerceptron:
 
@@ -22,6 +25,8 @@ class HiddenPerceptron:
         for i in range(16):
             self.weights.append(random.uniform(-1, 1))
         self.bias = random.uniform(-1, 1)
+
+
 
 
     def test(self, test_set):
@@ -37,14 +42,14 @@ class OutputPerceptron:
     of brute force methods and numpy ease.
 
     Attributes:
-        letter_1: A float value representing the "1" output of this perceptron
+        letter: A float value representing the "1" output of this perceptron
         weights: array of 16 weights randomized on initialization.
         bias: weight representing the bias
     """
 
-    def __init__(self, hidden_layer_output):
+    def __init__(self, letter):
         """Inits Perceptron class with its letter values [0.0,25.0]."""
-        self.letter_1 = first
+        self.letter = letter
         self.weights = []
         for i in range(16):
             self.weights.append(random.uniform(-1, 1))
@@ -63,7 +68,7 @@ class OutputPerceptron:
 
         result = sgn(np.dot(self.weights, test_set) + self.bias)
         if result == 1:
-            return self.letter_1
+            return self.letter
         else:
             return self.letter_2
 
@@ -85,14 +90,14 @@ class OutputPerceptron:
 
         correct = 0.0
         num_trains = 0.0
-        test_set = np.vstack((data_array[self.letter_1], data_array[self.letter_2]))
+        test_set = np.vstack((data_array[self.letter], data_array[self.letter_2]))
         np.random.shuffle(test_set)
 
         for i in range(len(test_set)):
             target_value = test_set[i, 0]
 
             # Assign the target value of the pair.
-            if target_value == self.letter_1:
+            if target_value == self.letter:
                 target_value = 1
             else:
                 target_value = -1
@@ -146,8 +151,20 @@ class PerceptronManager:
 
     def __init__(self):
         """Instantiates output_perceptron_list and other values."""
-
         self.output_perceptron_list = []
+        self.hidden_perceptron_list = []
+        self.hidden_layer_output = []
+        self.output_layer_output = []
+
+        for i in range(26):
+            self.output_perceptron_list.append(OutputPerceptron(i))
+
+        for i in range(NUM_HIDDEN_UNITS):
+            self.hidden_layer_output.append(HiddenPerceptron())
+
+
+
+        # OLD INIT BELOW
 
         # Loop creates distinct pairings of letter representations.
         for i in range(25):
