@@ -84,7 +84,14 @@ class OutputPerceptron:
         else:
             return self.letter_2
 
-    def train(self, data_array):
+    def forward_prop(self, hidden_layer_output):
+
+        # Output Perceptron has identifying letter
+        target_val = .9
+        output = 0.0
+
+
+        if
 
 
 
@@ -93,12 +100,7 @@ class OutputPerceptron:
 
 
 
-
-
-
-
-
-
+        # return target_val, output
 
 
         # # # # # # DEPRECATED
@@ -180,16 +182,6 @@ class PerceptronManager:
         for i in range(NUM_HIDDEN_UNITS):
             self.hidden_layer_output.append(HiddenPerceptron())
 
-
-
-        # OLD INIT BELOW
-
-        # Loop creates distinct pairings of letter representations.
-        for i in range(25):
-            for j in range(i+1, 26):
-                if i != j:
-                    self.output_perceptron_list.append(OutputPerceptron(i, j))
-
         # Training variables
         self.accuracy_previous_epoch = 0.0
         self.accuracy_current_epoch = 0.0
@@ -233,27 +225,31 @@ class PerceptronManager:
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
         file_data[:,1:] = self.scaler
 
-        # file_data[:, 1:] = file_data[:, 1:] / 15.0     # Get smaller values for the parameters
-
-        # Sort data into
+        """ DEPRECATED
         files_out = []
         for i in range(26):
             temp = file_data[file_data[:, 0] == float(i)]
             files_out.append(temp)
+        """
 
-        # Corrected loop to perform epochs
-        # Previous iteration defined an epoch as a single round of
-        # Testing for all 325 perceptrons.
-        # New epoch is defined at the perceptron level, not system.
-        for perceptron in self.output_perceptron_list:
-            perceptron_delta = 1
-            current_accuracy = 0
-            while perceptron_delta > ACCURACY_CHANGE:
-                previous_accuracy = current_accuracy
-                current_accuracy = perceptron.train(files_out)
+        # For each training example we must iterate through the entire set of perceptrons
+        for training_set in range(len(file_data)):
+            # Reset the output
+            self.hidden_layer_output = []
+            self.output_layer_output = []
+            previous_hidden_delta = 0
+            # Push the training set through to the hidden layer
+            for perceptron in self.hidden_perceptron_list:
+                # Grab outputs from the hidden layer
+                self.hidden_layer_output.append(perceptron.forward_prop(training_set))
+            # Push the output from hidden to each output perceptron
+            for perceptron in self.output_perceptron_list:
+                target_letter = training_set[0]
+                # Store each output from the output layer to calculate
+                target_val, k_output = perceptron.forward_prop(self.hidden_layer_output)
+                self.output_layer_output.append(k_output)
+            # Back prop dat net
 
-                perceptron_delta = abs(previous_accuracy - current_accuracy)
-                num_epochs += 1
 
         return num_epochs
 
@@ -336,6 +332,7 @@ def sigmoid_prime(result):
     # Pretty amazing math trick here from notes.
     return sigmoid(result)*(1-sigmoid(result))
 
+def
 
 network = PerceptronManager()
 network.menu()
