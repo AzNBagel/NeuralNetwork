@@ -63,7 +63,7 @@ class OutputPerceptron:
         """Inits Perceptron class with its letter values [0.0,25.0]."""
         self.letter = letter
         self.weights = []
-        for i in range(16):
+        for i in range(NUM_HIDDEN_UNITS):
             self.weights.append(random.uniform(-1, 1))
         self.bias = random.uniform(-1, 1)
 
@@ -232,12 +232,15 @@ class PerceptronManager:
             files_out.append(temp)
         """
 
+        previous_error = 0
         # For each training example we must iterate through the entire set of perceptrons
         for training_set in range(len(file_data)):
             # Reset the output
             self.hidden_layer_output = []
             self.output_layer_output = []
             previous_hidden_delta = 0
+            output_layer_error = []
+            hidden_layer_error = []
             # Push the training set through to the hidden layer
             for perceptron in self.hidden_perceptron_list:
                 # Grab outputs from the hidden layer
@@ -246,8 +249,22 @@ class PerceptronManager:
             for perceptron in self.output_perceptron_list:
                 target_letter = training_set[0]
                 # Store each output from the output layer to calculate
-                target_val, k_output = perceptron.forward_prop(self.hidden_layer_output)
-                self.output_layer_output.append(k_output)
+                target_val, output_k = perceptron.forward_prop(self.hidden_layer_output)
+                self.output_layer_output.append(output_k)
+            # Calculate error at output first, because used in hidden layer error
+            # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
+            for i in self.output_perceptron_list:
+                # made a lambda function because I felt like it
+                output_layer_error.append((lambda x: x(1-x)(target_val - x)) (self.output_layer_output[i]))
+
+            # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
+            for j in self.hidden_perceptron_list:
+                output_layer_sum = []
+                for h in self.output_perceptron_list:
+                    output_layer_sum.append((h.self.weights[j] * output_layer_error[h]))
+                hidden_layer_error.append(lambda x: x(1-x)(sum(output_layer_sum)) (self.hidden_layer_output[j]))
+
+
             # Back prop dat net
 
 
