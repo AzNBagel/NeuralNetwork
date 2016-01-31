@@ -16,34 +16,30 @@ MOMENTUM = .03
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
-
+NUM_FEATURES = 16
 
 
 class HiddenPerceptron:
 
     def __init__(self):
         self.weights = []
-
-        for i in range(16):
+        for i in range(NUM_FEATURES):
             self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
 
         self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
-
+        self.previous_weight_change = 0
 
 
 
     def test(self, test_set):
 
-    def learn(self):
-
-
     def forward_prop(self, training_set):
 
         # Input layer * Weights + bias
 
-
         # Pass this output to PerceptronManager to assemble into array
-
+    def back_prop(self, hidden_error, feature, feature_index):
+        self.weights[feature_index] += MOMENTUM * hidden_error * feature_index
 
 
 class OutputPerceptron:
@@ -55,7 +51,7 @@ class OutputPerceptron:
 
     Attributes:
         letter: A float value representing the "1" output of this perceptron
-        weights: array of 16 weights randomized on initialization.
+        weights: array of NUM_FEATURES weights randomized on initialization.
         bias: weight representing the bias
     """
 
@@ -152,17 +148,19 @@ class OutputPerceptron:
 
 
     def learn(self, params, target_value):
-        for i in range(16):
+        for i in range(NUM_FEATURES):
             self.weights[i] += (LEARNING_RATE * params[i] * target_value)
         # Apply same method to bias
         self.bias += (LEARNING_RATE * target_value)
 
     def randomize(self):
-        for i in range(16):
+        for i in range(NUM_FEATURES):
             self.weights[i] = random.uniform(-1, 1)
         self.bias = random.uniform(-1, 1)
 
-    def back_prop(self, results):
+    def back_prop(self, error, hidden_output, hidden_index):
+        self.weights[hidden_index] += MOMENTUM * error * hidden_output
+
 
 class PerceptronManager:
 
@@ -264,8 +262,15 @@ class PerceptronManager:
                     output_layer_sum.append((h.self.weights[j] * output_layer_error[h]))
                 hidden_layer_error.append(lambda x: x(1-x)(sum(output_layer_sum)) (self.hidden_layer_output[j]))
 
-
             # Back prop dat net
+            for j in range(len(self.hidden_layer_output)):
+                for i in range(len(self.output_perceptron_list)):
+                    self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j )
+            for h in range(1, NUM_FEATURES):
+                for i in range(len(hidden_layer_error)):
+                    self.hidden_perceptron_list.back_prop(hidden_layer_error[i], training_set[h], h)
+
+
 
 
         return num_epochs
