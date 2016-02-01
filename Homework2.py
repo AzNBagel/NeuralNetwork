@@ -3,7 +3,6 @@ import numpy as np
 from sklearn import preprocessing
 import math
 
-
 """
 Andrew McCann
 Machine Learning 445
@@ -22,7 +21,6 @@ EPOCHS = 10
 
 
 class HiddenPerceptron:
-
     def __init__(self):
         self.weights = []
         for i in range(NUM_FEATURES):
@@ -33,6 +31,7 @@ class HiddenPerceptron:
         for i in range(NUM_FEATURES):
             self.previous_weight_change.append(0.0)
         self.delta_bias = 0.0
+
     # def test(self, test_set):
 
     def forward_prop(self, training_set):
@@ -53,6 +52,7 @@ class HiddenPerceptron:
         return result
 
         # Pass this output to PerceptronManager to assemble into array
+
     def back_prop(self, hidden_error, feature, feature_index):
         delta_weight = LEARNING_RATE * hidden_error * feature + MOMENTUM * self.previous_weight_change[feature_index]
         self.weights[feature_index] += delta_weight
@@ -62,6 +62,7 @@ class HiddenPerceptron:
         delta_bias = LEARNING_RATE * error + MOMENTUM * self.delta_bias
         self.bias += delta_bias
         self.delta_bias = delta_bias
+
 
 class OutputPerceptron:
     """Individual OutputPerceptron object.
@@ -120,10 +121,10 @@ class OutputPerceptron:
             self.weights[i] += LEARNING_RATE * output_error * hidden_output[i]
 
     def back_prop_bias(self, error):
-        self.bias += LEARNING_RATE * error # implied * 1 to rep. bias node.
+        self.bias += LEARNING_RATE * error  # implied * 1 to rep. bias node.
+
 
 class PerceptronManager:
-
     def __init__(self):
         """Instantiates output_perceptron_list and other values."""
         self.output_perceptron_list = []
@@ -180,7 +181,7 @@ class PerceptronManager:
         file_data = file_data.astype(np.float32)
 
         self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
-        file_data[: ,1:] = self.scaler
+        file_data[:, 1:] = self.scaler
 
         total = len(file_data)
 
@@ -211,9 +212,10 @@ class PerceptronManager:
                 # Push the output from hidden to each output perceptron
                 for i in range(l_output):
                     # Store each output from the output layer to calculate
-                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
+                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output,
+                                                                                       target_letter)
                     self.output_layer_output.append(output_k)
-                    output_layer_error.append((lambda x: x*(1-x)*(target_val - x))(self.output_layer_output[i]))
+                    output_layer_error.append((lambda x: x * (1 - x) * (target_val - x))(self.output_layer_output[i]))
 
                 predicted_letter = np.argmax(self.output_layer_output)
 
@@ -223,16 +225,15 @@ class PerceptronManager:
 
                 if predicted_letter == target_letter:
                     correct += 1
-                # Calculate error at output first, because used in hidden layer error
-                # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
-                # for i in range(l_output):
+                    # Calculate error at output first, because used in hidden layer error
+                    # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
+                    # for i in range(l_output):
 
-                    #o = self.output_layer_output[i]
-                    #error = o * (1 - o) * (target_val - o)
-                    #output_layer_error.append(error)
+                    # o = self.output_layer_output[i]
+                    # error = o * (1 - o) * (target_val - o)
+                    # output_layer_error.append(error)
 
                     # made a lambda function because I felt like it
-
 
                 # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
                 for j in range(l_hidden):
@@ -241,13 +242,11 @@ class PerceptronManager:
                         output_layer_sum.append((self.output_perceptron_list[h].weights[j] * output_layer_error[h]))
                     # e = self.hidden_layer_output[j]
                     # error = e * (1-e) * (sum(output_layer_sum))
-                    l = lambda x: x * (1-x) * (sum(output_layer_sum))
+                    l = lambda x: x * (1 - x) * (sum(output_layer_sum))
                     hidden_layer_error.append(l(self.hidden_layer_output[j]))
 
-
-
                 # Back Propagation segment
-                #for j in range(l_hidden):
+                # for j in range(l_hidden):
                 for i in range(l_output):
                     self.output_perceptron_list[i].back_prop2(output_layer_error[i], self.hidden_layer_output)
                     self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
@@ -256,15 +255,13 @@ class PerceptronManager:
                     self.hidden_perceptron_list[i].back_prop_bias(hidden_layer_error[i])
                 for h in range(NUM_FEATURES):
                     for i in range(l_hidden):
-                        self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h+1], h)
+                        self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h + 1], h)
 
-                # for i in range()
-                # Update bias values for hidden layer
-
+                        # for i in range()
+                        # Update bias values for hidden layer
 
             # track some accuracy
-            print("Epoch: %d, Accuracy: %.2f" % (e, 100 * (correct/float(total))))
-
+            print("Epoch: %d, Accuracy: %.2f" % (e, 100 * (correct / float(total))))
 
         return EPOCHS
 
@@ -281,8 +278,8 @@ class PerceptronManager:
 
         for i in range(len(file_data)):
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
-        file_data = file_data.astype(np.float32)     # Convert to floats
-        file_data[:, 1:] = file_data[:, 1:] / 15.0     # Get smaller values for the parameters
+        file_data = file_data.astype(np.float32)  # Convert to floats
+        file_data[:, 1:] = file_data[:, 1:] / 15.0  # Get smaller values for the parameters
 
         # Create Confusion matrix
         c_matrix = np.zeros(shape=(26, 26), dtype=int)
@@ -332,10 +329,12 @@ class PerceptronManager:
                 self.test()
                 print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
 
+
 def sigmoid(result):
     """Sigmoid function."""
-    result = 1.0/(1.0 + float(math.exp(-result)))
+    result = 1.0 / (1.0 + float(math.exp(-result)))
     return result
+
 
 network = PerceptronManager()
 network.menu()
