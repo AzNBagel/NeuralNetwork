@@ -72,9 +72,8 @@ class OutputPerceptron:
 
         """
 
-
     def forward_prop(self, hidden_layer_output):
-        result = sum(self.weights * hidden_layer_output) + self.bias
+        result = sum(np.dot(self.weights, hidden_layer_output)) + self.bias
         result = sigmoid(result)
         return result
 
@@ -138,7 +137,6 @@ class OutputPerceptron:
     def back_prop(self, error, hidden_output, hidden_index):
         self.weights[hidden_index] += MOMENTUM * error * hidden_output
 
-
 class PerceptronManager:
 
     def __init__(self):
@@ -195,7 +193,7 @@ class PerceptronManager:
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
         file_data = file_data.astype(np.float32)     # Convert to floats
 
-        self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
+        self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
         file_data[: ,1:] = self.scaler
 
         """ DEPRECATED
@@ -220,7 +218,8 @@ class PerceptronManager:
                 self.hidden_layer_output.append(perceptron.forward_prop(training_set))
             # Push the output from hidden to each output perceptron
             for perceptron in self.output_perceptron_list:
-                target_letter = training_set[0]
+                # target_letter = training_set[0]
+
                 # Store each output from the output layer to calculate
                 target_val, output_k = perceptron.forward_prop(self.hidden_layer_output)
                 self.output_layer_output.append(output_k)
@@ -305,7 +304,7 @@ class PerceptronManager:
                 self.randomize_weights()
 
             if answer == 2:
-                print("Completed %d epochs" % self.epoch_loop())
+                # print("Completed %d epochs" % self.epoch_loop())
 
             if answer == 3:
                 self.test()
