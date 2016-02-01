@@ -15,7 +15,7 @@ ACCURACY_CHANGE = .0005
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
-NUM_HIDDEN_UNITS = 4
+NUM_HIDDEN_UNITS = 100
 NUM_FEATURES = 16
 EPOCHS = 10
 
@@ -257,11 +257,10 @@ class PerceptronManager:
                     for i in range(l_hidden):
                         self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h + 1], h)
 
-                        # for i in range()
-                        # Update bias values for hidden layer
+            # Need to insert test data accuracy in here for graphing in report
 
             # track some accuracy
-            print("Epoch: %d, Accuracy: %.2f" % (e, 100 * (correct / float(total))))
+            print("Epoch: %d, Accuracy: %.2f" % (e +1, 100 * (correct / float(total))))
 
         return EPOCHS
 
