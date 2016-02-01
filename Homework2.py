@@ -35,10 +35,10 @@ class HiddenPerceptron:
 
     def forward_prop(self, training_set):
         result = sum(self.weights * training_set[1:]) + self.bias
-        print("Hidden forward_prop result: %f" % result)
+        # print("Hidden forward_prop result: %f" % result)
 
         result = sigmoid(result)
-        print("Hidden forward_prop sigmoid result: %.2f" % result)
+        # print("Hidden forward_prop sigmoid result: %.2f" % result)
 
         return result
 
@@ -63,7 +63,7 @@ class OutputPerceptron:
 
     def __init__(self, letter):
         """Inits Perceptron class with its letter values [0.0,25.0]."""
-        self.letter = letter
+        self.letter = float(letter)
         self.weights = []
         for i in range(NUM_HIDDEN_UNITS):
             self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
@@ -87,6 +87,8 @@ class OutputPerceptron:
             result += self.weights[i] * hidden_layer_output[i]
         result += self.bias
         result = sigmoid(result)
+        # print("Forward_Prop Target Letter: %f" % target_letter)
+        # print(self.letter)
         if target_letter == self.letter:
             return result, .9
         else:
@@ -139,7 +141,6 @@ class OutputPerceptron:
 
     def back_prop_bias(self, error):
         self.bias += LEARNING_RATE * error # implied * 1 to rep. bias node.
-        print(self.bias)
 
 class PerceptronManager:
 
@@ -201,19 +202,23 @@ class PerceptronManager:
         self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
         file_data[: ,1:] = self.scaler
 
-        previous_error = 0
+        total = len(file_data)
+
         # For each training example we must iterate through the entire set of perceptrons
-        for e in EPOCHS:
+        for e in range(EPOCHS):
+            correct = 0
+            self.accuracy_current_epoch = 0.0
             for t in range(len(file_data)):
                 l_hidden = len(self.hidden_perceptron_list)
                 l_output = len(self.output_perceptron_list)
                 target_val = 0.0
                 training_set = file_data[t]
+                target_letter = training_set[0]
 
                 # Reset the output
                 self.hidden_layer_output = []
                 self.output_layer_output = []
-                previous_hidden_delta = 0
+
                 output_layer_error = []
                 hidden_layer_error = []
                 # Push the training set through to the hidden layer
@@ -223,22 +228,29 @@ class PerceptronManager:
 
                 # Push the output from hidden to each output perceptron
                 for i in range(l_output):
-                    target_letter = training_set[0]
-
                     # Store each output from the output layer to calculate
                     output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
                     self.output_layer_output.append(output_k)
+                    output_layer_error.append((lambda x: x*(1-x)*(target_val - x))(self.output_layer_output[i]))
 
+                predicted_letter = np.argmax(self.output_layer_output)
+
+                # print(self.output_layer_output)
+                # print("Predicted Letter: %f" % predicted_letter)
+                # print("Target: %f " % target_letter)
+
+                if predicted_letter == target_letter:
+                    correct += 1
                 # Calculate error at output first, because used in hidden layer error
                 # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
-                for i in range(l_output):
+                # for i in range(l_output):
 
                     #o = self.output_layer_output[i]
                     #error = o * (1 - o) * (target_val - o)
                     #output_layer_error.append(error)
 
                     # made a lambda function because I felt like it
-                    output_layer_error.append((lambda x: x*(1-x)*(target_val - x))(self.output_layer_output[i]))
+
 
                 # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
                 for j in range(l_hidden):
@@ -256,17 +268,18 @@ class PerceptronManager:
                 #for j in range(l_hidden):
                 for i in range(l_output):
                     self.output_perceptron_list[i].back_prop2(hidden_layer_error)
-                    self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
+                    # self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
                 for h in range(1, NUM_FEATURES):
                     for i in range(len(hidden_layer_error)):
                         self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
                 # Update bias values for hidden layer
 
 
-                # track some accuracy
+            # track some accuracy
+            print("Epoch: %d, Accuracy: %.2f" % (e, 100 * (correct/float(total))))
 
 
-        return num_epochs
+        return EPOCHS
 
     def test(self):
         """Method runs test data over trained perceptrons.
@@ -314,6 +327,8 @@ class PerceptronManager:
 
     def menu(self):
         """Lame little menu function I threw together."""
+        print(WEIGHT_UPPER_BOUND)
+        print(WEIGHT_LOWER_BOUND)
         answer = 1
         while answer != 4:
             print("Ghetto little menu")
