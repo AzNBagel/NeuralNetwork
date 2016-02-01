@@ -18,6 +18,7 @@ WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
 NUM_FEATURES = 16
+EPOCHS = 10
 
 
 class HiddenPerceptron:
@@ -129,7 +130,8 @@ class OutputPerceptron:
         self.bias += (LEARNING_RATE * target_value)
 
     def back_prop2(self, hidden_output):
-        self.weights = np.dot(self.weights * hidden_output)
+        for i in range(len(self.weights)):
+            self.weights[i] += hidden_output[i]
 
 
     def back_prop(self, error, hidden_output, hidden_index):
@@ -137,6 +139,7 @@ class OutputPerceptron:
 
     def back_prop_bias(self, error):
         self.bias += LEARNING_RATE * error # implied * 1 to rep. bias node.
+        print(self.bias)
 
 class PerceptronManager:
 
@@ -200,67 +203,68 @@ class PerceptronManager:
 
         previous_error = 0
         # For each training example we must iterate through the entire set of perceptrons
-        for t in range(len(file_data)):
-            l_hidden = len(self.hidden_perceptron_list)
-            l_output = len(self.output_perceptron_list)
-            target_val = 0.0
-            training_set = file_data[t]
+        for e in EPOCHS:
+            for t in range(len(file_data)):
+                l_hidden = len(self.hidden_perceptron_list)
+                l_output = len(self.output_perceptron_list)
+                target_val = 0.0
+                training_set = file_data[t]
 
-            # Reset the output
-            self.hidden_layer_output = []
-            self.output_layer_output = []
-            previous_hidden_delta = 0
-            output_layer_error = []
-            hidden_layer_error = []
-            # Push the training set through to the hidden layer
-            for i in range(l_hidden):
-                # Grab outputs from the hidden layer
-                self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(file_data[t]))
+                # Reset the output
+                self.hidden_layer_output = []
+                self.output_layer_output = []
+                previous_hidden_delta = 0
+                output_layer_error = []
+                hidden_layer_error = []
+                # Push the training set through to the hidden layer
+                for i in range(l_hidden):
+                    # Grab outputs from the hidden layer
+                    self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(file_data[t]))
 
-            # Push the output from hidden to each output perceptron
-            for i in range(l_output):
-                target_letter = training_set[0]
-
-                # Store each output from the output layer to calculate
-                output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
-                self.output_layer_output.append(output_k)
-
-            # Calculate error at output first, because used in hidden layer error
-            # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
-            for i in range(l_output):
-
-                #o = self.output_layer_output[i]
-                #error = o * (1 - o) * (target_val - o)
-                #output_layer_error.append(error)
-
-                # made a lambda function because I felt like it
-                output_layer_error.append((lambda x: x*(1-x)*(target_val - x))(self.output_layer_output[i]))
-
-            # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
-            for j in range(l_hidden):
-                output_layer_sum = []
-                for h in range(l_output):
-                    output_layer_sum.append((self.output_perceptron_list[h].weights[j] * output_layer_error[h]))
-                # e = self.hidden_layer_output[j]
-                # error = e * (1-e) * (sum(output_layer_sum))
-                l = lambda x: x * (1-x) * (sum(output_layer_sum))
-                hidden_layer_error.append(l(self.hidden_layer_output[j]))
-
-
-
-            # Back Propagation segment
-            for j in range(l_hidden):
+                # Push the output from hidden to each output perceptron
                 for i in range(l_output):
-                    self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j)
-            # Need to update bias
-            for i in range(l_output):
-                self.output_perceptron_list[i].back_pro_bias(output_layer_error[i])
-            for h in range(1, NUM_FEATURES):
-                for i in range(len(hidden_layer_error)):
-                    self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
-            # Update bias values for hidden layer
+                    target_letter = training_set[0]
 
-            num_epochs += 1
+                    # Store each output from the output layer to calculate
+                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
+                    self.output_layer_output.append(output_k)
+
+                # Calculate error at output first, because used in hidden layer error
+                # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
+                for i in range(l_output):
+
+                    #o = self.output_layer_output[i]
+                    #error = o * (1 - o) * (target_val - o)
+                    #output_layer_error.append(error)
+
+                    # made a lambda function because I felt like it
+                    output_layer_error.append((lambda x: x*(1-x)*(target_val - x))(self.output_layer_output[i]))
+
+                # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
+                for j in range(l_hidden):
+                    output_layer_sum = []
+                    for h in range(l_output):
+                        output_layer_sum.append((self.output_perceptron_list[h].weights[j] * output_layer_error[h]))
+                    # e = self.hidden_layer_output[j]
+                    # error = e * (1-e) * (sum(output_layer_sum))
+                    l = lambda x: x * (1-x) * (sum(output_layer_sum))
+                    hidden_layer_error.append(l(self.hidden_layer_output[j]))
+
+
+
+                # Back Propagation segment
+                #for j in range(l_hidden):
+                for i in range(l_output):
+                    self.output_perceptron_list[i].back_prop2(hidden_layer_error)
+                    self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
+                for h in range(1, NUM_FEATURES):
+                    for i in range(len(hidden_layer_error)):
+                        self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
+                # Update bias values for hidden layer
+
+
+                # track some accuracy
+
 
         return num_epochs
 
