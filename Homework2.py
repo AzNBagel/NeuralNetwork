@@ -11,9 +11,9 @@ Homework #2
 Neural Network Assignment
 """
 
-LEARNING_RATE = .2
+LEARNING_RATE = .3
 ACCURACY_CHANGE = .0005
-MOMENTUM = .03
+MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
@@ -43,7 +43,10 @@ class HiddenPerceptron:
 
         # Pass this output to PerceptronManager to assemble into array
     def back_prop(self, hidden_error, feature, feature_index):
-        self.weights[feature_index] += MOMENTUM * hidden_error * feature_index
+        delta_weight = LEARNING_RATE * hidden_error * feature_index + MOMENTUM * self.previous_weight_change
+        self.weights[feature_index] += delta_weight
+        self.previous_weight_change = delta_weight
+
 
 
 class OutputPerceptron:
@@ -126,7 +129,7 @@ class OutputPerceptron:
         self.bias += (LEARNING_RATE * target_value)
 
     def back_prop(self, error, hidden_output, hidden_index):
-        self.weights[hidden_index] += MOMENTUM * error * hidden_output
+        self.weights[hidden_index] += LEARNING_RATE * error * hidden_output
 
 class PerceptronManager:
 
@@ -188,13 +191,6 @@ class PerceptronManager:
         self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
         file_data[: ,1:] = self.scaler
 
-        """ DEPRECATED
-        files_out = []
-        for i in range(26):
-            temp = file_data[file_data[:, 0] == float(i)]
-            files_out.append(temp)
-        """
-
         previous_error = 0
         # For each training example we must iterate through the entire set of perceptrons
         for t in range(len(file_data)):
@@ -226,9 +222,6 @@ class PerceptronManager:
             # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
             for i in range(l_output):
 
-                print(target_val)
-
-
                 #o = self.output_layer_output[i]
                 #error = o * (1 - o) * (target_val - o)
                 #output_layer_error.append(error)
@@ -245,6 +238,8 @@ class PerceptronManager:
                 # error = e * (1-e) * (sum(output_layer_sum))
                 l = lambda x: x * (1-x) * (sum(output_layer_sum))
                 hidden_layer_error.append(l(self.hidden_layer_output[j]))
+
+
 
             # Back prop dat net
             for j in range(len(self.hidden_layer_output)):
@@ -265,6 +260,7 @@ class PerceptronManager:
         confusion matrix. No return type needed since its all within class.
 
         """
+
         # Generate data set
         file_data = np.genfromtxt('test.txt', delimiter=',', dtype='O')
 
@@ -322,11 +318,6 @@ class PerceptronManager:
 def sigmoid(result):
     """Sigmoid function."""
     return 1.0/(1.0 + float(math.exp(-result)))
-
-#def sigmoid_prime(result):
-#    """Take derivative of the sigmoid function."""
-#    # Pretty amazing math trick here from notes.
-#    return sigmoid(result)*(1-sigmoid(result))
 
 network = PerceptronManager()
 network.menu()
