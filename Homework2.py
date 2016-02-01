@@ -47,8 +47,6 @@ class HiddenPerceptron:
         self.weights[feature_index] += delta_weight
         self.previous_weight_change = delta_weight
 
-
-
 class OutputPerceptron:
     """Individual OutputPerceptron object.
 
@@ -69,6 +67,8 @@ class OutputPerceptron:
         for i in range(NUM_HIDDEN_UNITS):
             self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
         self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
+
+        self.error = 0
 
     def test(self, test_set):
         """Runs an instance of test data against its weight and returns that value.
@@ -128,8 +128,15 @@ class OutputPerceptron:
         # Apply same method to bias
         self.bias += (LEARNING_RATE * target_value)
 
+    def back_prop2(self, hidden_output):
+        self.weights = np.dot(self.weights * hidden_output)
+
+
     def back_prop(self, error, hidden_output, hidden_index):
         self.weights[hidden_index] += LEARNING_RATE * error * hidden_output
+
+    def back_prop_bias(self, error):
+        self.bias += LEARNING_RATE * error # implied * 1 to rep. bias node.
 
 class PerceptronManager:
 
@@ -241,13 +248,17 @@ class PerceptronManager:
 
 
 
-            # Back prop dat net
-            for j in range(len(self.hidden_layer_output)):
-                for i in range(len(self.output_perceptron_list)):
+            # Back Propagation segment
+            for j in range(l_hidden):
+                for i in range(l_output):
                     self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j)
+            # Need to update bias
+            for i in range(l_output):
+                self.output_perceptron_list[i].back_pro_bias(output_layer_error[i])
             for h in range(1, NUM_FEATURES):
                 for i in range(len(hidden_layer_error)):
                     self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
+            # Update bias values for hidden layer
 
             num_epochs += 1
 
