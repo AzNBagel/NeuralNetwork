@@ -29,8 +29,10 @@ class HiddenPerceptron:
             self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
 
         self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
-        self.previous_weight_change = 0
-
+        self.previous_weight_change = []
+        for i in range(NUM_FEATURES):
+            self.previous_weight_change.append(0.0)
+        self.delta_bias = 0.0
     # def test(self, test_set):
 
     def forward_prop(self, training_set):
@@ -52,13 +54,14 @@ class HiddenPerceptron:
 
         # Pass this output to PerceptronManager to assemble into array
     def back_prop(self, hidden_error, feature, feature_index):
-        delta_weight = LEARNING_RATE * hidden_error * feature + MOMENTUM * self.previous_weight_change
+        delta_weight = LEARNING_RATE * hidden_error * feature + MOMENTUM * self.previous_weight_change[feature_index]
         self.weights[feature_index] += delta_weight
-        self.previous_weight_change = delta_weight
+        self.previous_weight_change[feature_index] = delta_weight
 
     def back_prop_bias(self, error):
-
-        self.bias += LEARNING_RATE * error + MOMENTUM * self.previous_weight_change# implied * 1 to rep. bias node.
+        delta_bias = LEARNING_RATE * error + MOMENTUM * self.delta_bias
+        self.bias += delta_bias
+        self.delta_bias = delta_bias
 
 class OutputPerceptron:
     """Individual OutputPerceptron object.
@@ -106,50 +109,15 @@ class OutputPerceptron:
         else:
             return result, .1
 
-        # # # # # # DEPRECATED
-#        """
-#        correct = 0.0
-#        num_trains = 0.0
-#        test_set = np.vstack((data_array[self.letter], data_array[self.letter_2]))
-#        np.random.shuffle(test_set)
-#
-#        for i in range(len(test_set)):
-#            target_value = test_set[i, 0]
-
-            # Assign the target value of the pair.
-#            if target_value == self.letter:
-#                target_value = 1
-#            else:
-#                target_value = -1
-
-            # Result is useless by itself here so dump into SGN
-#            result = sgn(np.dot(self.weights, test_set[i, 1:]) + self.bias)
-
-            # Figure out accuracy
-#            if result == target_value:
-#                correct += 1
-#            else:
-#                self.learn(test_set[i, 1:], target_value)
-
-            # Track number of iterations
-#            num_trains += 1
-#        accuracy = correct/num_trains
-        # Pass through the number of iterations plus the num correct
-#        return accuracy
-#        """
     def learn(self, params, target_value):
         for i in range(NUM_FEATURES):
             self.weights[i] += (LEARNING_RATE * params[i] * target_value)
         # Apply same method to bias
         self.bias += (LEARNING_RATE * target_value)
 
-    def back_prop2(self, hidden_output):
+    def back_prop2(self, output_error, hidden_output):
         for i in range(len(self.weights)):
-            self.weights[i] += hidden_output[i]
-
-
-    def back_prop(self, error, hidden_output, hidden_index):
-        self.weights[hidden_index] += LEARNING_RATE * error * hidden_output
+            self.weights[i] += LEARNING_RATE * output_error * hidden_output[i]
 
     def back_prop_bias(self, error):
         self.bias += LEARNING_RATE * error # implied * 1 to rep. bias node.
@@ -281,7 +249,7 @@ class PerceptronManager:
                 # Back Propagation segment
                 #for j in range(l_hidden):
                 for i in range(l_output):
-                    self.output_perceptron_list[i].back_prop2(hidden_layer_error)
+                    self.output_perceptron_list[i].back_prop2(output_layer_error[i], self.hidden_layer_output)
                     self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
                 # Critical to position this before the regular weight change, fuck
                 for i in range(l_hidden):
