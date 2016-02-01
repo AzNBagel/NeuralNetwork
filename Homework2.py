@@ -29,17 +29,12 @@ class HiddenPerceptron:
         self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
         self.previous_weight_change = 0
 
-
-
     # def test(self, test_set):
 
     def forward_prop(self, training_set):
         result = sum(self.weights * training_set[1:]) + self.bias
-
         result = sigmoid(result)
-
         return result
-
 
         # Pass this output to PerceptronManager to assemble into array
     def back_prop(self, hidden_error, feature, feature_index):
@@ -74,34 +69,14 @@ class OutputPerceptron:
             test_set: One row of NumPy matrix data set that will needs to be tested
 
         Returns:
-            letter_1 will be returned if the sgn() function returns 1, letter_2
-            will be returned if the sgn() function returns -1.
+
         """
 
-        result = sgn(np.dot(self.weights, test_set) + self.bias)
-        if result == 1:
-            return self.letter
-        else:
-            return self.letter_2
 
     def forward_prop(self, hidden_layer_output):
-
-        # Output Perceptron has identifying letter
-        target_val = .9
-        output = 0.0
-
-
-        if
-
-
-
-
-
-
-
-
-        # return target_val, output
-
+        result = sum(self.weights * hidden_layer_output) + self.bias
+        result = sigmoid(result)
+        return result
 
         # # # # # # DEPRECATED
 
@@ -148,8 +123,6 @@ class OutputPerceptron:
         accuracy = correct/num_trains
         # Pass through the number of iterations plus the num correct
         return accuracy
-
-
 
     def learn(self, params, target_value):
         for i in range(NUM_FEATURES):
@@ -217,15 +190,13 @@ class PerceptronManager:
         # Run Perceptron Training Algorithm
         file_data = np.genfromtxt('training.txt', delimiter=',', dtype='O')
 
-
-
         # Convert to numerical value letter instead of Char
         for i in range(len(file_data)):
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
         file_data = file_data.astype(np.float32)     # Convert to floats
 
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
-        file_data[:,1:] = self.scaler
+        file_data[: ,1:] = self.scaler
 
         """ DEPRECATED
         files_out = []
@@ -264,18 +235,15 @@ class PerceptronManager:
                 output_layer_sum = []
                 for h in self.output_perceptron_list:
                     output_layer_sum.append((h.self.weights[j] * output_layer_error[h]))
-                hidden_layer_error.append(lambda x: x(1-x)(sum(output_layer_sum)) (self.hidden_layer_output[j]))
+                hidden_layer_error.append(lambda x: x(1-x)(sum(output_layer_sum))(self.hidden_layer_output[j]))
 
             # Back prop dat net
             for j in range(len(self.hidden_layer_output)):
                 for i in range(len(self.output_perceptron_list)):
-                    self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j )
+                    self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j)
             for h in range(1, NUM_FEATURES):
                 for i in range(len(hidden_layer_error)):
-                    self.hidden_perceptron_list.back_prop(hidden_layer_error[i], training_set[h], h)
-
-
-
+                    self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
 
         return num_epochs
 
@@ -343,22 +311,14 @@ class PerceptronManager:
                 self.test()
                 print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
 
-def sgn(result):
-    if result < 0:
-        return -1
-    else:
-        return 1
-
 def sigmoid(result):
     """Sigmoid function."""
     return 1.0/(1.0 +np.exp(-result))
 
-def sigmoid_prime(result):
-    """Take derivative of the sigmoid function."""
-    # Pretty amazing math trick here from notes.
-    return sigmoid(result)*(1-sigmoid(result))
-
-def
+#def sigmoid_prime(result):
+#    """Take derivative of the sigmoid function."""
+#    # Pretty amazing math trick here from notes.
+#    return sigmoid(result)*(1-sigmoid(result))
 
 network = PerceptronManager()
 network.menu()
