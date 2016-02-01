@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from sklearn import preprocessing
+import math
 
 
 """
@@ -63,8 +64,8 @@ class OutputPerceptron:
         self.letter = letter
         self.weights = []
         for i in range(NUM_HIDDEN_UNITS):
-            self.weights.append(random.uniform(-1, 1))
-        self.bias = random.uniform(-1, 1)
+            self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
+        self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
 
     def test(self, test_set):
         """Runs an instance of test data against its weight and returns that value.
@@ -88,61 +89,41 @@ class OutputPerceptron:
             return result, .1
 
         # # # # # # DEPRECATED
-
-        """Runs training data against weights and calls learning if necessary.
-
-        The main function of this project. The data_array will have all the
-        testing sets for a particular letter. The test_set conversion stacks
-        the matrices and then I shuffle them immediately after to simulate
-        interleaving the examples for higher accuracy.
-
-        Args:
-            data_array: An array of 26 matrices representing data from A-Z
-
-        Returns:
-            A tuple of how many iterations on this training data, and how
-            many were correct.
-        """
-
-        correct = 0.0
-        num_trains = 0.0
-        test_set = np.vstack((data_array[self.letter], data_array[self.letter_2]))
-        np.random.shuffle(test_set)
-
-        for i in range(len(test_set)):
-            target_value = test_set[i, 0]
+#        """
+#        correct = 0.0
+#        num_trains = 0.0
+#        test_set = np.vstack((data_array[self.letter], data_array[self.letter_2]))
+#        np.random.shuffle(test_set)
+#
+#        for i in range(len(test_set)):
+#            target_value = test_set[i, 0]
 
             # Assign the target value of the pair.
-            if target_value == self.letter:
-                target_value = 1
-            else:
-                target_value = -1
+#            if target_value == self.letter:
+#                target_value = 1
+#            else:
+#                target_value = -1
 
             # Result is useless by itself here so dump into SGN
-            result = sgn(np.dot(self.weights, test_set[i, 1:]) + self.bias)
+#            result = sgn(np.dot(self.weights, test_set[i, 1:]) + self.bias)
 
             # Figure out accuracy
-            if result == target_value:
-                correct += 1
-            else:
-                self.learn(test_set[i, 1:], target_value)
+#            if result == target_value:
+#                correct += 1
+#            else:
+#                self.learn(test_set[i, 1:], target_value)
 
             # Track number of iterations
-            num_trains += 1
-        accuracy = correct/num_trains
+#            num_trains += 1
+#        accuracy = correct/num_trains
         # Pass through the number of iterations plus the num correct
-        return accuracy
-
+#        return accuracy
+#        """
     def learn(self, params, target_value):
         for i in range(NUM_FEATURES):
             self.weights[i] += (LEARNING_RATE * params[i] * target_value)
         # Apply same method to bias
         self.bias += (LEARNING_RATE * target_value)
-
-    def randomize(self):
-        for i in range(NUM_FEATURES):
-            self.weights[i] = random.uniform(-1, 1)
-        self.bias = random.uniform(-1, 1)
 
     def back_prop(self, error, hidden_output, hidden_index):
         self.weights[hidden_index] += MOMENTUM * error * hidden_output
@@ -195,13 +176,6 @@ class PerceptronManager:
         """
         num_epochs = 0
 
-        print("Num Hidden Units:")
-        print(len(self.hidden_perceptron_list))
-        print("Num output units:")
-        print(len(self.output_perceptron_list))
-
-
-
         # Run Perceptron Training Algorithm
         file_data = np.genfromtxt('training.txt', delimiter=',', dtype='O')
 
@@ -239,10 +213,10 @@ class PerceptronManager:
             for i in range(l_hidden):
                 # Grab outputs from the hidden layer
                 self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(file_data[t]))
+
             # Push the output from hidden to each output perceptron
             for i in range(l_output):
                 target_letter = training_set[0]
-
 
                 # Store each output from the output layer to calculate
                 output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
@@ -253,25 +227,24 @@ class PerceptronManager:
             for i in range(l_output):
 
                 print(target_val)
-                o = self.output_layer_output[i]
 
-                error = o * (1 - o) * (target_val - o)
-                output_layer_error.append(error)
+
+                #o = self.output_layer_output[i]
+                #error = o * (1 - o) * (target_val - o)
+                #output_layer_error.append(error)
 
                 # made a lambda function because I felt like it
-                # output_layer_error.append((lambda x: x(1-x)(target_val - x))(self.output_layer_output[i]))
+                output_layer_error.append((lambda x: x*(1-x)*(target_val - x))(self.output_layer_output[i]))
 
             # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
             for j in range(l_hidden):
                 output_layer_sum = []
                 for h in range(l_output):
                     output_layer_sum.append((self.output_perceptron_list[h].weights[j] * output_layer_error[h]))
-                print(output_layer_sum)
-                print(sum(output_layer_sum))
-                e = self.hidden_layer_output[j]
-                error = e * (1-e) * (sum(output_layer_sum))
-                # l = lambda x: x(1-x)(sum(output_layer_sum))
-                hidden_layer_error.append(error)
+                # e = self.hidden_layer_output[j]
+                # error = e * (1-e) * (sum(output_layer_sum))
+                l = lambda x: x * (1-x) * (sum(output_layer_sum))
+                hidden_layer_error.append(l(self.hidden_layer_output[j]))
 
             # Back prop dat net
             for j in range(len(self.hidden_layer_output)):
@@ -279,14 +252,9 @@ class PerceptronManager:
                     self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j)
             for h in range(1, NUM_FEATURES):
                 for i in range(len(hidden_layer_error)):
-                    print(hidden_layer_error[i])
-                    print(training_set[h])
-                    print(h)
                     self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
 
-
             num_epochs += 1
-
 
         return num_epochs
 
@@ -338,25 +306,22 @@ class PerceptronManager:
         answer = 1
         while answer != 4:
             print("Ghetto little menu")
-            print("Press 1 randomize weights")
-            print("Press 2 to train")
-            print("Press 3 to test")
+
+            print("Press 1 to train")
+            print("Press 2 to test")
             print("Press 4 to quit")
             answer = int(input("Choice: "))
 
             if answer == 1:
-                self.randomize_weights()
-
-            if answer == 2:
                 print("Completed %d epochs" % self.epoch_loop())
 
-            if answer == 3:
+            if answer == 2:
                 self.test()
                 print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
 
 def sigmoid(result):
     """Sigmoid function."""
-    return 1.0/(1.0 +np.exp(-result))
+    return 1.0/(1.0 + float(math.exp(-result)))
 
 #def sigmoid_prime(result):
 #    """Take derivative of the sigmoid function."""
