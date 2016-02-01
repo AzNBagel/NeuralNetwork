@@ -33,7 +33,11 @@ class HiddenPerceptron:
 
     def forward_prop(self, training_set):
         result = sum(self.weights * training_set[1:]) + self.bias
+        print("Hidden forward_prop result: %f" % result)
+
         result = sigmoid(result)
+        print("Hidden forward_prop sigmoid result: %.2f" % result)
+
         return result
 
         # Pass this output to PerceptronManager to assemble into array
@@ -72,10 +76,16 @@ class OutputPerceptron:
 
         """
 
-    def forward_prop(self, hidden_layer_output):
-        result = sum(np.dot(self.weights, hidden_layer_output)) + self.bias
+    def forward_prop(self, hidden_layer_output, target_letter):
+        result = 0
+        for i in range(len(self.weights)):
+            result += self.weights[i] * hidden_layer_output[i]
+        result += self.bias
         result = sigmoid(result)
-        return result
+        if target_letter == self.letter:
+            return result, .9
+        else:
+            return result, .1
 
         # # # # # # DEPRECATED
 
@@ -152,8 +162,8 @@ class PerceptronManager:
         for i in range(26):
             self.output_perceptron_list.append(OutputPerceptron(i))
 
-        for i in range(NUM_HIDDEN_UNITS):
-            self.hidden_layer_output.append(HiddenPerceptron())
+        for j in range(NUM_HIDDEN_UNITS):
+            self.hidden_perceptron_list.append(HiddenPerceptron())
 
         # Training variables
         self.accuracy_previous_epoch = 0.0
@@ -185,13 +195,21 @@ class PerceptronManager:
         """
         num_epochs = 0
 
+        print("Num Hidden Units:")
+        print(len(self.hidden_perceptron_list))
+        print("Num output units:")
+        print(len(self.output_perceptron_list))
+
+
+
         # Run Perceptron Training Algorithm
         file_data = np.genfromtxt('training.txt', delimiter=',', dtype='O')
 
         # Convert to numerical value letter instead of Char
         for i in range(len(file_data)):
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
-        file_data = file_data.astype(np.float32)     # Convert to floats
+            # Convert to floats
+        file_data = file_data.astype(np.float32)
 
         self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
         file_data[: ,1:] = self.scaler
@@ -205,7 +223,12 @@ class PerceptronManager:
 
         previous_error = 0
         # For each training example we must iterate through the entire set of perceptrons
-        for training_set in range(len(file_data)):
+        for t in range(len(file_data)):
+            l_hidden = len(self.hidden_perceptron_list)
+            l_output = len(self.output_perceptron_list)
+            target_val = 0.0
+            training_set = file_data[t]
+
             # Reset the output
             self.hidden_layer_output = []
             self.output_layer_output = []
@@ -213,28 +236,42 @@ class PerceptronManager:
             output_layer_error = []
             hidden_layer_error = []
             # Push the training set through to the hidden layer
-            for perceptron in self.hidden_perceptron_list:
+            for i in range(l_hidden):
                 # Grab outputs from the hidden layer
-                self.hidden_layer_output.append(perceptron.forward_prop(training_set))
+                self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(file_data[t]))
             # Push the output from hidden to each output perceptron
-            for perceptron in self.output_perceptron_list:
-                # target_letter = training_set[0]
+            for i in range(l_output):
+                target_letter = training_set[0]
+
 
                 # Store each output from the output layer to calculate
-                target_val, output_k = perceptron.forward_prop(self.hidden_layer_output)
+                output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
                 self.output_layer_output.append(output_k)
+
             # Calculate error at output first, because used in hidden layer error
             # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
-            for i in self.output_perceptron_list:
+            for i in range(l_output):
+
+                print(target_val)
+                o = self.output_layer_output[i]
+
+                error = o * (1 - o) * (target_val - o)
+                output_layer_error.append(error)
+
                 # made a lambda function because I felt like it
-                output_layer_error.append((lambda x: x(1-x)(target_val - x)) (self.output_layer_output[i]))
+                # output_layer_error.append((lambda x: x(1-x)(target_val - x))(self.output_layer_output[i]))
 
             # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
-            for j in self.hidden_perceptron_list:
+            for j in range(l_hidden):
                 output_layer_sum = []
-                for h in self.output_perceptron_list:
-                    output_layer_sum.append((h.self.weights[j] * output_layer_error[h]))
-                hidden_layer_error.append(lambda x: x(1-x)(sum(output_layer_sum))(self.hidden_layer_output[j]))
+                for h in range(l_output):
+                    output_layer_sum.append((self.output_perceptron_list[h].weights[j] * output_layer_error[h]))
+                print(output_layer_sum)
+                print(sum(output_layer_sum))
+                e = self.hidden_layer_output[j]
+                error = e * (1-e) * (sum(output_layer_sum))
+                # l = lambda x: x(1-x)(sum(output_layer_sum))
+                hidden_layer_error.append(error)
 
             # Back prop dat net
             for j in range(len(self.hidden_layer_output)):
@@ -242,7 +279,14 @@ class PerceptronManager:
                     self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output[j], j)
             for h in range(1, NUM_FEATURES):
                 for i in range(len(hidden_layer_error)):
+                    print(hidden_layer_error[i])
+                    print(training_set[h])
+                    print(h)
                     self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
+
+
+            num_epochs += 1
+
 
         return num_epochs
 
@@ -304,7 +348,7 @@ class PerceptronManager:
                 self.randomize_weights()
 
             if answer == 2:
-                # print("Completed %d epochs" % self.epoch_loop())
+                print("Completed %d epochs" % self.epoch_loop())
 
             if answer == 3:
                 self.test()
