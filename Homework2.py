@@ -34,9 +34,17 @@ class HiddenPerceptron:
     # def test(self, test_set):
 
     def forward_prop(self, training_set):
+
+        result = 0
+        for i in range(1, len(self.weights)):
+            result += self.weights[i] * training_set[i]
+        result += self.bias
+        """
+        print(self.weights)
+        print(training_set[1:])
         result = sum(self.weights * training_set[1:]) + self.bias
         # print("Hidden forward_prop result: %f" % result)
-
+        """
         result = sigmoid(result)
         # print("Hidden forward_prop sigmoid result: %.2f" % result)
 
@@ -83,7 +91,7 @@ class OutputPerceptron:
 
     def forward_prop(self, hidden_layer_output, target_letter):
         result = 0
-        for i in range(len(self.weights)):
+        for i in range(1, len(self.weights)):
             result += self.weights[i] * hidden_layer_output[i]
         result += self.bias
         result = sigmoid(result)
@@ -347,7 +355,8 @@ class PerceptronManager:
 
 def sigmoid(result):
     """Sigmoid function."""
-    return 1.0/(1.0 + float(math.exp(-result)))
+    result = 1.0/(1.0 + float(math.exp(-result)))
+    return result
 
 network = PerceptronManager()
 network.menu()
