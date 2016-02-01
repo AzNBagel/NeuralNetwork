@@ -36,7 +36,7 @@ class HiddenPerceptron:
     def forward_prop(self, training_set):
 
         result = 0
-        for i in range(1, len(self.weights)):
+        for i in range(len(training_set)):
             result += self.weights[i] * training_set[i]
         result += self.bias
         """
@@ -52,9 +52,13 @@ class HiddenPerceptron:
 
         # Pass this output to PerceptronManager to assemble into array
     def back_prop(self, hidden_error, feature, feature_index):
-        delta_weight = LEARNING_RATE * hidden_error * feature_index + MOMENTUM * self.previous_weight_change
+        delta_weight = LEARNING_RATE * hidden_error * feature + MOMENTUM * self.previous_weight_change
         self.weights[feature_index] += delta_weight
         self.previous_weight_change = delta_weight
+
+    def back_prop_bias(self, error):
+
+        self.bias += LEARNING_RATE * error + MOMENTUM * self.previous_weight_change# implied * 1 to rep. bias node.
 
 class OutputPerceptron:
     """Individual OutputPerceptron object.
@@ -91,7 +95,7 @@ class OutputPerceptron:
 
     def forward_prop(self, hidden_layer_output, target_letter):
         result = 0
-        for i in range(1, len(self.weights)):
+        for i in range(len(hidden_layer_output)):
             result += self.weights[i] * hidden_layer_output[i]
         result += self.bias
         result = sigmoid(result)
@@ -212,13 +216,15 @@ class PerceptronManager:
 
         total = len(file_data)
 
+        l_hidden = len(self.hidden_perceptron_list)
+        l_output = len(self.output_perceptron_list)
+
         # For each training example we must iterate through the entire set of perceptrons
         for e in range(EPOCHS):
             correct = 0
             self.accuracy_current_epoch = 0.0
             for t in range(len(file_data)):
-                l_hidden = len(self.hidden_perceptron_list)
-                l_output = len(self.output_perceptron_list)
+
                 target_val = 0.0
                 training_set = file_data[t]
                 target_letter = training_set[0]
@@ -232,7 +238,7 @@ class PerceptronManager:
                 # Push the training set through to the hidden layer
                 for i in range(l_hidden):
                     # Grab outputs from the hidden layer
-                    self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(file_data[t]))
+                    self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(training_set[1:]))
 
                 # Push the output from hidden to each output perceptron
                 for i in range(l_output):
@@ -276,10 +282,15 @@ class PerceptronManager:
                 #for j in range(l_hidden):
                 for i in range(l_output):
                     self.output_perceptron_list[i].back_prop2(hidden_layer_error)
-                    # self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
-                for h in range(1, NUM_FEATURES):
-                    for i in range(len(hidden_layer_error)):
-                        self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h], h)
+                    self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
+                # Critical to position this before the regular weight change, fuck
+                for i in range(l_hidden):
+                    self.hidden_perceptron_list[i].back_prop_bias(hidden_layer_error[i])
+                for h in range(NUM_FEATURES):
+                    for i in range(l_hidden):
+                        self.hidden_perceptron_list[i].back_prop(hidden_layer_error[i], training_set[h+1], h)
+
+                # for i in range()
                 # Update bias values for hidden layer
 
 
