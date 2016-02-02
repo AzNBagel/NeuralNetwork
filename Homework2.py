@@ -12,13 +12,13 @@ Homework #2
 Neural Network Assignment
 """
 
-LEARNING_RATE = .05
+LEARNING_RATE = .3
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
-NUM_HIDDEN_UNITS = 4
+NUM_HIDDEN_UNITS = 2
 NUM_FEATURES = 16
-EPOCHS = 1
+EPOCHS = 25
 
 
 class HiddenPerceptron:
@@ -287,10 +287,6 @@ class PerceptronManager:
             # Get prediction value, NOTE: argmax returns first instance if tied.
             # Not very concerned with this since the float values are all random
             predicted_letter = np.argmax(output_layer_output)
-            #print(hidden_layer_output)
-            #print(output_layer_output)
-            #print(predicted_letter)
-            #print(target_letter)
 
             # Increment accuracy tracker
             if predicted_letter == target_letter:
@@ -317,7 +313,6 @@ class PerceptronManager:
             print("Ghetto little menu")
 
             print("Press 1 to train")
-            #print("Press 2 to test")
             print("Press 4 to quit")
             answer = int(input("Choice: "))
 
@@ -326,6 +321,7 @@ class PerceptronManager:
                 training.insert(0,0)
                 test.insert(0,0)
                 print("Completed %d epochs" % EPOCHS)
+                """
                 LEARNING_RATE = .6
                 training2, test2 = self.epoch_loop()
                 training2.insert(0,0)
@@ -333,24 +329,20 @@ class PerceptronManager:
                 print("Completed %d epochs" % EPOCHS)
 
                 # Graphing hacks
-
-                training1, = plt.plot(epoch_guide, training, label="Training Low", linestyle='--')
-                test1, = plt.plot(epoch_guide, test, label="Test Low", linestyle='--')
-
+                """
+                training1, = plt.plot(epoch_guide, training, label="Training 2 Hidden", linestyle='--')
+                test1, = plt.plot(epoch_guide, test, label="Test 2 Hidden", linestyle='--')
+                """
                 training2, = plt.plot(epoch_guide, training2, label="Training High", linewidth=2.0)
                 test2, = plt.plot(epoch_guide, test2, label="Test High", linewidth=2.0)
-
+                """
                 # Create Legend
-                plt.legend(handles=[training1, test1, training2, test2])
-
+                # plt.legend(handles=[training1, test1, training2, test2])
+                plt.legend(handles=[training1, test1])
                 plt.xlabel("Epochs")
                 plt.ylabel("Accuracy")
                 plt.axis([0, EPOCHS, 0, 100])
                 plt.show()
-
-            #if answer == 2:
-                #self.test()
-                #print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
 
 
 def sigmoid(result):
