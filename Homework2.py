@@ -199,7 +199,7 @@ class PerceptronManager:
         for e in range(EPOCHS):
             correct = 0
             self.accuracy_current_epoch = 0.0
-            for t in range(len(file_data)):
+            for t in range(total):
 
                 # Unsure if saving this up here does anything,
                 # target_val = 0.0
@@ -260,33 +260,48 @@ class PerceptronManager:
             # track some accuracy
             print("Epoch: %d, Accuracy: %.2f" % (e +1, 100 * (correct / float(total))))
 
+
         return EPOCHS
 
     def test_accuracy(self):
         file_data = np.genfromtxt('test.txt', delimiter=',', dtype='O')
 
+        test_length = len(file_data)
+        correct = 0
+
         # Convert to numerical value letter instead of Char
-        for i in range(len(file_data)):
+        for i in range(test_length):
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
         # Convert to floats
         file_data = file_data.astype(np.float32)
 
-        total = len(file_data)
 
-        l_hidden = len(self.hidden_perceptron_list)
-        l_output = len(self.output_perceptron_list)
+        for t in range(test_length):
+            training_set = file_data[t]
+            target_letter = training_set[0]
 
+            l_hidden = len(self.hidden_perceptron_list)
+            l_output = len(self.output_perceptron_list)
 
-        for i in range(l_hidden):
-            # Grab outputs from the hidden layer
-            self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(training_set[1:]))
+            hidden_layer_output = []
+            output_layer_output = []
 
-            # Push the output from hidden to each output perceptron
+            for i in range(l_hidden):
+                # Get outputs from hidden layer to send through
+                hidden_layer_output.append(self.hidden_perceptron_list[i].test(training_set[1:]))
             for i in range(l_output):
                 # Get output locally to append later, change target_val
                 output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
-
                 self.output_layer_output.append(output_k)
+             # Get prediction value, NOTE: Argmax returns first instance if tied.
+            # Not very concerned with this since the float values are all random
+            predicted_letter = np.argmax(self.output_layer_output)
+
+            # Increment accuracy tracker
+            if predicted_letter == target_letter:
+                correct += 1
+
+        print("Test set accuracy: %.2f" % (100 * (correct / float(test_length))))
 
 
     def test(self):
