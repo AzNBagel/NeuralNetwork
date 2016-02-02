@@ -15,9 +15,9 @@ ACCURACY_CHANGE = .0005
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
-NUM_HIDDEN_UNITS = 100
+NUM_HIDDEN_UNITS = 4
 NUM_FEATURES = 16
-EPOCHS = 10
+EPOCHS = 100
 
 
 class HiddenPerceptron:
@@ -36,7 +36,7 @@ class HiddenPerceptron:
 
     def forward_prop(self, training_set):
 
-        result = 0
+        result = 0.0
         for i in range(len(training_set)):
             result += self.weights[i] * training_set[i]
         result += self.bias
@@ -59,7 +59,7 @@ class HiddenPerceptron:
         self.previous_weight_change[feature_index] = delta_weight
 
     def back_prop_bias(self, error):
-        delta_bias = LEARNING_RATE * error + MOMENTUM * self.delta_bias
+        delta_bias = (LEARNING_RATE * error) + (MOMENTUM * self.delta_bias)
         self.bias += delta_bias
         self.delta_bias = delta_bias
 
@@ -84,8 +84,10 @@ class OutputPerceptron:
         for i in range(NUM_HIDDEN_UNITS):
             self.weights.append(random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
         self.bias = random.uniform(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND)
-
-        self.error = 0
+        self.previous_weight_change = []
+        for i in range(NUM_HIDDEN_UNITS):
+            self.previous_weight_change.append(0.0)
+        self.delta_bias = 0.0
 
     def test(self, test_set):
         """Runs an instance of test data against its weight and returns that value.
@@ -98,7 +100,7 @@ class OutputPerceptron:
         """
 
     def forward_prop(self, hidden_layer_output, target_letter):
-        result = 0
+        result = 0.0
         for i in range(len(hidden_layer_output)):
             result += self.weights[i] * hidden_layer_output[i]
         result += self.bias
@@ -110,19 +112,21 @@ class OutputPerceptron:
         else:
             return result, .1
 
-    def learn(self, params, target_value):
-        for i in range(NUM_FEATURES):
-            self.weights[i] += (LEARNING_RATE * params[i] * target_value)
-        # Apply same method to bias
-        self.bias += (LEARNING_RATE * target_value)
-
     def back_prop(self, output_error, hidden_output):
         for i in range(len(self.weights)):
-            self.weights[i] += LEARNING_RATE * output_error * hidden_output[i]
+            delta_weight = LEARNING_RATE * output_error * hidden_output[i] + MOMENTUM * self.previous_weight_change[i]
+            self.weights[i] += delta_weight
+            self.previous_weight_change[i] = delta_weight
+
+
+
+
+            # self.weights[i] += LEARNING_RATE * output_error * hidden_output[i] + MOMENTUM * self.previous_weight_change[i]
 
     def back_prop_bias(self, error):
-        self.bias += LEARNING_RATE * error  # implied * 1 to rep. bias node.
-
+        delta_bias = (LEARNING_RATE * error) + (MOMENTUM * self.delta_bias)
+        self.bias += delta_bias
+        self.delta_bias = delta_bias
 
 class PerceptronManager:
     def __init__(self):
@@ -267,14 +271,23 @@ class PerceptronManager:
         # Convert to floats
         file_data = file_data.astype(np.float32)
 
-        # Used to define mean and std
-        # self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
-        # file_data[:, 1:] = self.scaler
-
         total = len(file_data)
 
         l_hidden = len(self.hidden_perceptron_list)
         l_output = len(self.output_perceptron_list)
+
+
+        for i in range(l_hidden):
+            # Grab outputs from the hidden layer
+            self.hidden_layer_output.append(self.hidden_perceptron_list[i].forward_prop(training_set[1:]))
+
+            # Push the output from hidden to each output perceptron
+            for i in range(l_output):
+                # Get output locally to append later, change target_val
+                output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
+
+                self.output_layer_output.append(output_k)
+
 
     def test(self):
         """Method runs test data over trained perceptrons.
