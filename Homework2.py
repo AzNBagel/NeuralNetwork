@@ -4,7 +4,6 @@ from sklearn import preprocessing
 import math
 import matplotlib.pyplot as plt
 
-
 """
 Andrew McCann
 Machine Learning 445
@@ -16,9 +15,9 @@ LEARNING_RATE = .3
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
-NUM_HIDDEN_UNITS = 2
+NUM_HIDDEN_UNITS = 5
 NUM_FEATURES = 16
-EPOCHS = 25
+EPOCHS = 10
 
 
 class HiddenPerceptron:
@@ -94,10 +93,12 @@ class OutputPerceptron:
         """Runs an instance of test data against its weight and returns that value.
 
         Args:
-
+            hidden_layer_output: Outputs from the hidden layer to apply against the weights
+            to sum together with the bias. This value is passed through the sigmoid function
+            to get the activation for this node.
 
         Returns:
-
+            result: output of the sigmoid function
         """
         result = 0.0
         for i in range(len(hidden_layer_output)):
@@ -106,8 +107,6 @@ class OutputPerceptron:
         result = sigmoid(result)
 
         return result
-
-
 
     def forward_prop(self, hidden_layer_output, target_letter):
         result = 0.0
@@ -133,13 +132,14 @@ class OutputPerceptron:
         self.bias += delta_bias
         self.delta_bias = delta_bias
 
+
 class PerceptronManager:
     def __init__(self):
         """Instantiates output_perceptron_list and other values."""
         self.output_perceptron_list = []
         self.hidden_perceptron_list = []
-        #self.hidden_layer_output = []
-        #self.output_layer_output = []
+        # self.hidden_layer_output = []
+        # self.output_layer_output = []
 
         for i in range(26):
             self.output_perceptron_list.append(OutputPerceptron(i))
@@ -175,14 +175,12 @@ class PerceptronManager:
         file_data = file_data.astype(np.float32)
         test_data = test_data.astype(np.float32)
 
-
         # Save scaling data to apply to test set and transform training data
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
 
         file_data[:, 1:] = self.scaler.transform(file_data[:, 1:])
 
         test_data[:, 1:] = self.scaler.transform(test_data[:, 1:])
-
 
         # Set total amount of test sets for computing accuracy
         total = len(file_data)
@@ -194,7 +192,6 @@ class PerceptronManager:
         # For each training example we must iterate through the entire set of perceptrons
         for e in range(EPOCHS):
             correct = 0
-            self.accuracy_current_epoch = 0.0
             for t in range(total):
 
                 # Unsure if saving this up here does anything,
@@ -216,7 +213,8 @@ class PerceptronManager:
                 # Push the output from hidden to each output perceptron
                 for i in range(l_output):
                     # Get output locally to append later, change target_val
-                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
+                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output,
+                                                                                       target_letter)
 
                     self.output_layer_output.append(output_k)
                     output_layer_error.append((lambda x: x * (1 - x) * (target_val - x))(self.output_layer_output[i]))
@@ -254,7 +252,7 @@ class PerceptronManager:
             # Need to insert test data accuracy in here for graphing in report
 
             # track some accuracy
-            print("Epoch: %d, Accuracy: %.2f" % (e +1, 100 * (correct / float(total))))
+            print("Epoch: %d, Accuracy: %.2f" % (e + 1, 100 * (correct / float(total))))
             training_accuracy.append(100 * (correct / float(total)))
             test_accuracy.append(self.test_accuracy(test_data))
 
@@ -262,10 +260,8 @@ class PerceptronManager:
 
     def test_accuracy(self, file_data):
 
-
         test_length = len(file_data)
         correct = 0.0
-
 
         for t in range(test_length):
             training_set = file_data[t]
@@ -300,7 +296,7 @@ class PerceptronManager:
         """Lame little menu function I threw together."""
         epoch_guide = []
         global LEARNING_RATE
-        for i in range(EPOCHS+1):
+        for i in range(EPOCHS + 1):
             epoch_guide.append(i)
         print("****PARAMS****")
         print("# Hidden Units: %d" % NUM_HIDDEN_UNITS)
@@ -318,24 +314,24 @@ class PerceptronManager:
 
             if answer == 1:
                 training, test = self.epoch_loop()
-                training.insert(0,0)
-                test.insert(0,0)
-                print("Completed %d epochs" % EPOCHS)
-                """
-                LEARNING_RATE = .6
-                training2, test2 = self.epoch_loop()
-                training2.insert(0,0)
-                test2.insert(0,0)
+                training.insert(0, 0)
+                test.insert(0, 0)
                 print("Completed %d epochs" % EPOCHS)
 
-                # Graphing hacks
-                """
+                # LEARNING_RATE = .6
+                # training2, test2 = self.epoch_loop()
+                # training2.insert(0,0)
+                # test2.insert(0,0)
+                # print("Completed %d epochs" % EPOCHS)
+                # # # # # # # # #
+                # Graphing hacks#
+                # # # # # # # # #
                 training1, = plt.plot(epoch_guide, training, label="Training 2 Hidden", linestyle='--')
                 test1, = plt.plot(epoch_guide, test, label="Test 2 Hidden", linestyle='--')
-                """
-                training2, = plt.plot(epoch_guide, training2, label="Training High", linewidth=2.0)
-                test2, = plt.plot(epoch_guide, test2, label="Test High", linewidth=2.0)
-                """
+
+                # training2, = plt.plot(epoch_guide, training2, label="Training High", linewidth=2.0)
+                # test2, = plt.plot(epoch_guide, test2, label="Test High", linewidth=2.0)
+
                 # Create Legend
                 # plt.legend(handles=[training1, test1, training2, test2])
                 plt.legend(handles=[training1, test1])
@@ -346,7 +342,15 @@ class PerceptronManager:
 
 
 def sigmoid(result):
-    """Sigmoid function."""
+    """Sigmoid function.
+
+    Args:
+         result: The result of the weights * hidden layer outputs, or inputs
+
+    Returns:
+        Dumps the result of the sigmoid function back out to be stored.
+    """
+
     result = 1.0 / (1.0 + float(math.exp(-result)))
     return result
 
