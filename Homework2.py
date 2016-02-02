@@ -2,6 +2,7 @@ import random
 import numpy as np
 from sklearn import preprocessing
 import math
+import matplotlib.pyplot as plt
 
 """
 Andrew McCann
@@ -11,13 +12,12 @@ Neural Network Assignment
 """
 
 LEARNING_RATE = .3
-ACCURACY_CHANGE = .0005
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
 NUM_FEATURES = 16
-EPOCHS = 100
+EPOCHS = 50
 
 
 class HiddenPerceptron:
@@ -93,7 +93,7 @@ class OutputPerceptron:
         """Runs an instance of test data against its weight and returns that value.
 
         Args:
-            test_set: One row of NumPy matrix data set that will needs to be tested
+
 
         Returns:
 
@@ -137,24 +137,14 @@ class PerceptronManager:
         """Instantiates output_perceptron_list and other values."""
         self.output_perceptron_list = []
         self.hidden_perceptron_list = []
-        self.hidden_layer_output = []
-        self.output_layer_output = []
+        #self.hidden_layer_output = []
+        #self.output_layer_output = []
 
         for i in range(26):
             self.output_perceptron_list.append(OutputPerceptron(i))
 
         for j in range(NUM_HIDDEN_UNITS):
             self.hidden_perceptron_list.append(HiddenPerceptron())
-
-        # Training variables
-        self.accuracy_previous_epoch = 0.0
-        self.accuracy_current_epoch = 0.0
-        self.delta_accuracy = 1
-
-        # Testing counts
-        self.overall_accuracy = 0
-        self.final_correct = 0
-        self.final_iterations = 0
 
     def epoch_loop(self):
         """Control loop for running training data.
@@ -168,7 +158,8 @@ class PerceptronManager:
         accuracy. This method overall will be more accurate because it waits
         for low-accuracy perceptrons to attain more accurate weights.
         """
-        num_epochs = 0
+        training_accuracy = []
+        test_accuracy = []
 
         # Run Perceptron Training Algorithm
         file_data = np.genfromtxt('training.txt', delimiter=',', dtype='O')
@@ -186,12 +177,11 @@ class PerceptronManager:
 
         # Save scaling data to apply to test set and transform training data
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
-        print(file_data)
+
         file_data[:, 1:] = self.scaler.transform(file_data[:, 1:])
-        print(file_data)
-        print(test_data)
+
         test_data[:, 1:] = self.scaler.transform(test_data[:, 1:])
-        print(test_data)
+
 
         # Set total amount of test sets for computing accuracy
         total = len(file_data)
@@ -264,9 +254,10 @@ class PerceptronManager:
 
             # track some accuracy
             print("Epoch: %d, Accuracy: %.2f" % (e +1, 100 * (correct / float(total))))
-            self.test_accuracy(test_data)
+            training_accuracy.append(100 * (correct / float(total)))
+            test_accuracy.append(self.test_accuracy(test_data))
 
-        return EPOCHS
+        return training_accuracy, test_accuracy
 
     def test_accuracy(self, file_data):
 
@@ -294,11 +285,11 @@ class PerceptronManager:
 
             # Get prediction value, NOTE: argmax returns first instance if tied.
             # Not very concerned with this since the float values are all random
-            predicted_letter = np.argmax(self.output_layer_output)
-            print(hidden_layer_output)
-            print(output_layer_output)
-            print(predicted_letter)
-            print(target_letter)
+            predicted_letter = np.argmax(output_layer_output)
+            #print(hidden_layer_output)
+            #print(output_layer_output)
+            #print(predicted_letter)
+            #print(target_letter)
 
             # Increment accuracy tracker
             if predicted_letter == target_letter:
@@ -306,70 +297,42 @@ class PerceptronManager:
 
         print("Test set accuracy: %.2f" % (100 * (correct / float(test_length))))
 
-
-    def test(self):
-        """Method runs test data over trained perceptrons.
-
-        Tally results using testing variables in object to then create
-        confusion matrix. No return type needed since its all within class.
-
-        """
-
-        # Generate data set
-        file_data = np.genfromtxt('test.txt', delimiter=',', dtype='O')
-
-        for i in range(len(file_data)):
-            file_data[i, 0] = ord(file_data[i, 0]) - 65.
-        file_data = file_data.astype(np.float32)  # Convert to floats
-        file_data[:, 1:] = file_data[:, 1:] / 15.0  # Get smaller values for the parameters
-
-        # Create Confusion matrix
-        c_matrix = np.zeros(shape=(26, 26), dtype=int)
-
-        # Control data flow and track actual letter
-        for i in range(len(file_data)):
-            vote_tracking = []
-            for j in range(26):
-                vote_tracking.append(0.0)
-            actual_letter = file_data[i, 0]
-
-            for perceptron in self.output_perceptron_list:
-                predicted_letter = perceptron.test(file_data[i, 1:])  # Pass one row at a time, minus actual letter
-                vote_tracking[predicted_letter] = ((vote_tracking[predicted_letter]) + 1)
-
-            predicted_letter = np.argmax(vote_tracking)
-
-            # Count number of test instance
-            self.final_iterations += 1
-
-            # Confusion Matrix
-            c_matrix[int(actual_letter), int(predicted_letter)] += 1
-
-            # Tally for accuracy
-            if predicted_letter == actual_letter:
-                self.final_correct += 1
-
-        print(c_matrix)
+        return 100 * (correct / float(test_length))
 
     def menu(self):
         """Lame little menu function I threw together."""
-        print(WEIGHT_UPPER_BOUND)
-        print(WEIGHT_LOWER_BOUND)
+        epoch_guide = []
+        for i in range(EPOCHS+1):
+            epoch_guide.append(i)
+        print("****PARAMS****")
+        print("# Hidden Units: %d" % NUM_HIDDEN_UNITS)
+        print("Momentum: %f" % MOMENTUM)
+        print("Learning rate: %f" % LEARNING_RATE)
+        print("Weight range: +/-%f" % WEIGHT_UPPER_BOUND)
+
         answer = 1
         while answer != 4:
             print("Ghetto little menu")
 
             print("Press 1 to train")
-            print("Press 2 to test")
+            #print("Press 2 to test")
             print("Press 4 to quit")
             answer = int(input("Choice: "))
 
             if answer == 1:
-                print("Completed %d epochs" % self.epoch_loop())
+                training, test = self.epoch_loop()
+                training.insert(0,0)
+                test.insert(0,0)
+                print("Completed %d epochs" % EPOCHS)
+                plt.plot(epoch_guide, training, epoch_guide, test, linewidth=1.0)
+                plt.xlabel("Epochs")
+                plt.ylabel("Accuracy")
+                plt.axis([0, EPOCHS, 0, 100])
+                plt.show()
 
-            if answer == 2:
-                self.test()
-                print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
+            #if answer == 2:
+                #self.test()
+                #print("Overall accuracy of test is : %d / %d" % (self.final_correct, self.final_iterations))
 
 
 def sigmoid(result):
