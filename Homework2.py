@@ -4,6 +4,7 @@ from sklearn import preprocessing
 import math
 import matplotlib.pyplot as plt
 
+
 """
 Andrew McCann
 Machine Learning 445
@@ -17,7 +18,7 @@ WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
 NUM_FEATURES = 16
-EPOCHS = 25
+EPOCHS = 1
 
 
 class HiddenPerceptron:
@@ -330,7 +331,18 @@ class PerceptronManager:
                 training2.insert(0,0)
                 test2.insert(0,0)
                 print("Completed %d epochs" % EPOCHS)
-                plt.plot(epoch_guide, training, epoch_guide, test, epoch_guide, training2, epoch_guide, test2, linewidth=1.0)
+
+                # Graphing hacks
+
+                training1, = plt.plot(epoch_guide, training, label="Training Low", linestyle='--')
+                test1, = plt.plot(epoch_guide, test, label="Test Low", linestyle='--')
+
+                training2, = plt.plot(epoch_guide, training2, label="Training High", linewidth=2.0)
+                test2, = plt.plot(epoch_guide, test2, label="Test High", linewidth=2.0)
+
+                # Create Legend
+                plt.legend(handles=[training1, test1, training2, test2])
+
                 plt.xlabel("Epochs")
                 plt.ylabel("Accuracy")
                 plt.axis([0, EPOCHS, 0, 100])
