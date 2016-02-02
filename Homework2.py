@@ -11,13 +11,13 @@ Homework #2
 Neural Network Assignment
 """
 
-LEARNING_RATE = .3
+LEARNING_RATE = .05
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
-NUM_HIDDEN_UNITS = 5
+NUM_HIDDEN_UNITS = 4
 NUM_FEATURES = 16
-EPOCHS = 10
+EPOCHS = 25
 
 
 class HiddenPerceptron:
@@ -33,6 +33,8 @@ class HiddenPerceptron:
         self.delta_bias = 0.0
 
     def test(self, test_set):
+        # Literally the same thing as forward_prop
+        # Just made this for clarity in naming.
         result = 0.0
         for i in range(len(test_set)):
             result += self.weights[i] * test_set[i]
@@ -42,7 +44,7 @@ class HiddenPerceptron:
         return result
 
     def forward_prop(self, training_set):
-
+        # Dot product plus bias through a sigmoid.
         result = 0.0
         for i in range(len(training_set)):
             result += self.weights[i] * training_set[i]
@@ -54,11 +56,13 @@ class HiddenPerceptron:
         # Pass this output to PerceptronManager to assemble into array
 
     def back_prop(self, hidden_error, feature, feature_index):
+        # Calculate delta and save it
         delta_weight = LEARNING_RATE * hidden_error * feature + MOMENTUM * self.previous_weight_change[feature_index]
         self.weights[feature_index] += delta_weight
         self.previous_weight_change[feature_index] = delta_weight
 
     def back_prop_bias(self, error):
+        # Save as above for the bias.
         delta_bias = (LEARNING_RATE * error) + (MOMENTUM * self.delta_bias)
         self.bias += delta_bias
         self.delta_bias = delta_bias
@@ -109,6 +113,7 @@ class OutputPerceptron:
         return result
 
     def forward_prop(self, hidden_layer_output, target_letter):
+        # Simple dot product run through sigmoid.
         result = 0.0
         for i in range(len(hidden_layer_output)):
             result += self.weights[i] * hidden_layer_output[i]
@@ -122,12 +127,14 @@ class OutputPerceptron:
             return result, .1
 
     def back_prop(self, output_error, hidden_output):
+        # For each weight we need to calculate the change, and store it for momentum
         for i in range(len(self.weights)):
             delta_weight = LEARNING_RATE * output_error * hidden_output[i] + MOMENTUM * self.previous_weight_change[i]
             self.weights[i] += delta_weight
             self.previous_weight_change[i] = delta_weight
 
     def back_prop_bias(self, error):
+        # Same idea as above, but for the bias.
         delta_bias = (LEARNING_RATE * error) + (MOMENTUM * self.delta_bias)
         self.bias += delta_bias
         self.delta_bias = delta_bias
@@ -178,8 +185,9 @@ class PerceptronManager:
         # Save scaling data to apply to test set and transform training data
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
 
+        # The Standard Scaler behavior is strange. Decided to transform both
+        # because when I tried to save the values it always got warped.
         file_data[:, 1:] = self.scaler.transform(file_data[:, 1:])
-
         test_data[:, 1:] = self.scaler.transform(test_data[:, 1:])
 
         # Set total amount of test sets for computing accuracy
@@ -259,17 +267,19 @@ class PerceptronManager:
         return training_accuracy, test_accuracy
 
     def test_accuracy(self, file_data):
-
         test_length = len(file_data)
         correct = 0.0
 
+        # For each test example
         for t in range(test_length):
             training_set = file_data[t]
             target_letter = training_set[0]
 
+            # Calc these to avoid repetitive calls
             l_hidden = len(self.hidden_perceptron_list)
             l_output = len(self.output_perceptron_list)
 
+            # These can be local
             hidden_layer_output = []
             output_layer_output = []
 
@@ -295,7 +305,6 @@ class PerceptronManager:
     def menu(self):
         """Lame little menu function I threw together."""
         epoch_guide = []
-        global LEARNING_RATE
         for i in range(EPOCHS + 1):
             epoch_guide.append(i)
         print("****PARAMS****")
