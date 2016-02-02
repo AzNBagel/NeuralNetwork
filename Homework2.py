@@ -116,7 +116,7 @@ class OutputPerceptron:
         # Apply same method to bias
         self.bias += (LEARNING_RATE * target_value)
 
-    def back_prop2(self, output_error, hidden_output):
+    def back_prop(self, output_error, hidden_output):
         for i in range(len(self.weights)):
             self.weights[i] += LEARNING_RATE * output_error * hidden_output[i]
 
@@ -180,8 +180,9 @@ class PerceptronManager:
             # Convert to floats
         file_data = file_data.astype(np.float32)
 
-        self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
-        file_data[:, 1:] = self.scaler
+
+        self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
+        file_data[:, 1:] = self.scaler.transform(file_data[:, 1:])
 
         total = len(file_data)
 
@@ -248,7 +249,7 @@ class PerceptronManager:
                 # Back Propagation segment
                 # for j in range(l_hidden):
                 for i in range(l_output):
-                    self.output_perceptron_list[i].back_prop2(output_layer_error[i], self.hidden_layer_output)
+                    self.output_perceptron_list[i].back_prop(output_layer_error[i], self.hidden_layer_output)
                     self.output_perceptron_list[i].back_prop_bias(output_layer_error[i])
                 # Critical to position this before the regular weight change, fuck
                 for i in range(l_hidden):
@@ -263,6 +264,24 @@ class PerceptronManager:
             print("Epoch: %d, Accuracy: %.2f" % (e +1, 100 * (correct / float(total))))
 
         return EPOCHS
+
+    def test_accuracy(self):
+        file_data = np.genfromtxt('test.txt', delimiter=',', dtype='O')
+
+        # Convert to numerical value letter instead of Char
+        for i in range(len(file_data)):
+            file_data[i, 0] = ord(file_data[i, 0]) - 65.
+        # Convert to floats
+        file_data = file_data.astype(np.float32)
+
+        # Used to define mean and std
+        # self.scaler = preprocessing.StandardScaler().fit_transform(file_data[:, 1:])
+        # file_data[:, 1:] = self.scaler
+
+        total = len(file_data)
+
+        l_hidden = len(self.hidden_perceptron_list)
+        l_output = len(self.output_perceptron_list)
 
     def test(self):
         """Method runs test data over trained perceptrons.
