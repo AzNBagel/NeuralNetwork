@@ -11,13 +11,13 @@ Homework #2
 Neural Network Assignment
 """
 
-LEARNING_RATE = .3
+LEARNING_RATE = .05
 MOMENTUM = .3
 WEIGHT_UPPER_BOUND = .25
 WEIGHT_LOWER_BOUND = -WEIGHT_UPPER_BOUND
 NUM_HIDDEN_UNITS = 4
 NUM_FEATURES = 16
-EPOCHS = 50
+EPOCHS = 25
 
 
 class HiddenPerceptron:
@@ -302,6 +302,7 @@ class PerceptronManager:
     def menu(self):
         """Lame little menu function I threw together."""
         epoch_guide = []
+        global LEARNING_RATE
         for i in range(EPOCHS+1):
             epoch_guide.append(i)
         print("****PARAMS****")
@@ -324,7 +325,12 @@ class PerceptronManager:
                 training.insert(0,0)
                 test.insert(0,0)
                 print("Completed %d epochs" % EPOCHS)
-                plt.plot(epoch_guide, training, epoch_guide, test, linewidth=1.0)
+                LEARNING_RATE = .6
+                training2, test2 = self.epoch_loop()
+                training2.insert(0,0)
+                test2.insert(0,0)
+                print("Completed %d epochs" % EPOCHS)
+                plt.plot(epoch_guide, training, epoch_guide, test, epoch_guide, training2, epoch_guide, test2, linewidth=1.0)
                 plt.xlabel("Epochs")
                 plt.ylabel("Accuracy")
                 plt.axis([0, EPOCHS, 0, 100])
