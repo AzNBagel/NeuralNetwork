@@ -32,7 +32,14 @@ class HiddenPerceptron:
             self.previous_weight_change.append(0.0)
         self.delta_bias = 0.0
 
-    # def test(self, test_set):
+    def test(self, test_set):
+        result = 0.0
+        for i in range(len(test_set)):
+            result += self.weights[i] * test_set[i]
+        result += self.bias
+        result = sigmoid(result)
+
+        return result
 
     def forward_prop(self, training_set):
 
@@ -40,14 +47,7 @@ class HiddenPerceptron:
         for i in range(len(training_set)):
             result += self.weights[i] * training_set[i]
         result += self.bias
-        """
-        print(self.weights)
-        print(training_set[1:])
-        result = sum(self.weights * training_set[1:]) + self.bias
-        # print("Hidden forward_prop result: %f" % result)
-        """
         result = sigmoid(result)
-        # print("Hidden forward_prop sigmoid result: %.2f" % result)
 
         return result
 
@@ -89,7 +89,7 @@ class OutputPerceptron:
             self.previous_weight_change.append(0.0)
         self.delta_bias = 0.0
 
-    def test(self, test_set):
+    def test(self, hidden_layer_output):
         """Runs an instance of test data against its weight and returns that value.
 
         Args:
@@ -98,6 +98,15 @@ class OutputPerceptron:
         Returns:
 
         """
+        result = 0.0
+        for i in range(len(hidden_layer_output)):
+            result += self.weights[i] * hidden_layer_output[i]
+        result += self.bias
+        result = sigmoid(result)
+
+        return result
+
+
 
     def forward_prop(self, hidden_layer_output, target_letter):
         result = 0.0
@@ -118,11 +127,6 @@ class OutputPerceptron:
             self.weights[i] += delta_weight
             self.previous_weight_change[i] = delta_weight
 
-
-
-
-            # self.weights[i] += LEARNING_RATE * output_error * hidden_output[i] + MOMENTUM * self.previous_weight_change[i]
-
     def back_prop_bias(self, error):
         delta_bias = (LEARNING_RATE * error) + (MOMENTUM * self.delta_bias)
         self.bias += delta_bias
@@ -135,9 +139,6 @@ class PerceptronManager:
         self.hidden_perceptron_list = []
         self.hidden_layer_output = []
         self.output_layer_output = []
-
-        # Saving the STD and Mean from training data to use against the test data
-        self.scaler = []
 
         for i in range(26):
             self.output_perceptron_list.append(OutputPerceptron(i))
@@ -155,12 +156,6 @@ class PerceptronManager:
         self.final_correct = 0
         self.final_iterations = 0
 
-    def randomize_weights(self):
-        """Simple little method to re-randomize weights."""
-        for i in range(325):
-            self.output_perceptron_list[i].randomize()
-
-    # Loop to control duration of epochs
     def epoch_loop(self):
         """Control loop for running training data.
 
@@ -177,16 +172,26 @@ class PerceptronManager:
 
         # Run Perceptron Training Algorithm
         file_data = np.genfromtxt('training.txt', delimiter=',', dtype='O')
+        test_data = np.genfromtxt('test.txt', delimiter=',', dtype='O')
 
         # Convert to numerical value letter instead of Char
         for i in range(len(file_data)):
             file_data[i, 0] = ord(file_data[i, 0]) - 65.
+            test_data[i, 0] = ord(test_data[i, 0]) - 65.
+
             # Convert to floats
         file_data = file_data.astype(np.float32)
+        test_data = test_data.astype(np.float32)
+
 
         # Save scaling data to apply to test set and transform training data
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
+        print(file_data)
         file_data[:, 1:] = self.scaler.transform(file_data[:, 1:])
+        print(file_data)
+        print(test_data)
+        test_data[:, 1:] = self.scaler.transform(test_data[:, 1:])
+        print(test_data)
 
         # Set total amount of test sets for computing accuracy
         total = len(file_data)
@@ -259,21 +264,15 @@ class PerceptronManager:
 
             # track some accuracy
             print("Epoch: %d, Accuracy: %.2f" % (e +1, 100 * (correct / float(total))))
-
+            self.test_accuracy(test_data)
 
         return EPOCHS
 
-    def test_accuracy(self):
-        file_data = np.genfromtxt('test.txt', delimiter=',', dtype='O')
+    def test_accuracy(self, file_data):
+
 
         test_length = len(file_data)
-        correct = 0
-
-        # Convert to numerical value letter instead of Char
-        for i in range(test_length):
-            file_data[i, 0] = ord(file_data[i, 0]) - 65.
-        # Convert to floats
-        file_data = file_data.astype(np.float32)
+        correct = 0.0
 
 
         for t in range(test_length):
@@ -290,16 +289,20 @@ class PerceptronManager:
                 # Get outputs from hidden layer to send through
                 hidden_layer_output.append(self.hidden_perceptron_list[i].test(training_set[1:]))
             for i in range(l_output):
-                # Get output locally to append later, change target_val
-                output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
-                self.output_layer_output.append(output_k)
-             # Get prediction value, NOTE: Argmax returns first instance if tied.
+                # Collect output to find result.
+                output_layer_output.append(self.output_perceptron_list[i].test(hidden_layer_output))
+
+            # Get prediction value, NOTE: argmax returns first instance if tied.
             # Not very concerned with this since the float values are all random
             predicted_letter = np.argmax(self.output_layer_output)
+            print(hidden_layer_output)
+            print(output_layer_output)
+            print(predicted_letter)
+            print(target_letter)
 
             # Increment accuracy tracker
             if predicted_letter == target_letter:
-                correct += 1
+                correct += 1.0
 
         print("Test set accuracy: %.2f" % (100 * (correct / float(test_length))))
 
