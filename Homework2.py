@@ -180,12 +180,14 @@ class PerceptronManager:
             # Convert to floats
         file_data = file_data.astype(np.float32)
 
-
+        # Save scaling data to apply to test set and transform training data
         self.scaler = preprocessing.StandardScaler().fit(file_data[:, 1:])
         file_data[:, 1:] = self.scaler.transform(file_data[:, 1:])
 
+        # Set total amount of test sets for computing accuracy
         total = len(file_data)
 
+        # Save these once rather than use local calls repeatedly
         l_hidden = len(self.hidden_perceptron_list)
         l_output = len(self.output_perceptron_list)
 
@@ -195,7 +197,8 @@ class PerceptronManager:
             self.accuracy_current_epoch = 0.0
             for t in range(len(file_data)):
 
-                target_val = 0.0
+                # Unsure if saving this up here does anything,
+                # target_val = 0.0
                 training_set = file_data[t]
                 target_letter = training_set[0]
 
@@ -212,29 +215,19 @@ class PerceptronManager:
 
                 # Push the output from hidden to each output perceptron
                 for i in range(l_output):
-                    # Store each output from the output layer to calculate
-                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output,
-                                                                                       target_letter)
+                    # Get output locally to append later, change target_val
+                    output_k, target_val = self.output_perceptron_list[i].forward_prop(self.hidden_layer_output, target_letter)
+
                     self.output_layer_output.append(output_k)
                     output_layer_error.append((lambda x: x * (1 - x) * (target_val - x))(self.output_layer_output[i]))
 
+                # Get prediction value, NOTE: Argmax returns first instance if tied.
+                # Not very concerned with this since the float values are all random
                 predicted_letter = np.argmax(self.output_layer_output)
 
-                # print(self.output_layer_output)
-                # print("Predicted Letter: %f" % predicted_letter)
-                # print("Target: %f " % target_letter)
-
+                # Increment accuracy tracker
                 if predicted_letter == target_letter:
                     correct += 1
-                    # Calculate error at output first, because used in hidden layer error
-                    # OUTPUT LAYER = delta_k = output_k(1 - output_k)(target_val - output_k)
-                    # for i in range(l_output):
-
-                    # o = self.output_layer_output[i]
-                    # error = o * (1 - o) * (target_val - o)
-                    # output_layer_error.append(error)
-
-                    # made a lambda function because I felt like it
 
                 # HIDDEN LAYER = delta_j = output_j(1- output_j)(sum(k_value_weight * delta_k)
                 for j in range(l_hidden):
